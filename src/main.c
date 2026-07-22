@@ -1,6 +1,6 @@
 #include "./game/entity.h"
 
-#include "game.h"
+#include "game/game.h"
 #include "raylib.h"
 
 int main(void) {
@@ -26,8 +26,6 @@ int main(void) {
 
     EndDrawing();
   }
-
-  world_compoent_data_free(&world);
 }
 
 /* vim:set ts=3 sw=2 sts=2 et: */

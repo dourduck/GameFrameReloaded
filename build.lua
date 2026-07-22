@@ -2,7 +2,8 @@
 
 -- game.h
 os.execute("echo '[***BULIDING GAME LIB***]'")
-os.execute("gcc ./src/game.c -c -I./include/ -L./lib/ -lraylib -Wl,-rpath,$(pwd)/lib/ -lm -lpthread -ldl -lrt -lX11")
+os.execute(
+	"gcc ./src/game/game.c -c -I./include/ -L./lib/ -lraylib -Wl,-rpath,$(pwd)/lib/ -lm -lpthread -ldl -lrt -lX11")
 
 -- -- entity.h
 -- os.execute("echo '[***BULIDING ENTITY LIB***]'")
