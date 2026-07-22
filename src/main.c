@@ -38,6 +38,9 @@ int main(void) {
     world_query(&world, (BIT(Position_id) | BIT(Velocity_id)), sys_movement,
                 &dt);
 
+    event_queue_flush(&event_queue);
+    event_arena_free();
+
     BeginDrawing();
     ClearBackground(GRAY);
     world_query(&world, BIT(Position_id), sys_render, NULL);
