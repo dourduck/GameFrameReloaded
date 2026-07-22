@@ -1,6 +1,7 @@
 #ifndef EVENTS_H
 #define EVENTS_H
 
+#include "../ecs/archetypes.h"
 #include <stdint.h>
 
 typedef uint32_t u32;
@@ -17,6 +18,7 @@ typedef enum {
   /* (-Gameplay-) */
   EVENT_ENTITY_DIED,
   EVENT_ENTITY_SPAWNED,
+  EVENT_ENTITY_TARGET_REACHED,
   EVENT_DAMAGE_DEALT,
   EVENT_ITEM_PICKED_UP,
 
@@ -58,6 +60,10 @@ typedef struct {
       float x, y;
       int entity_type;
     } entity_spawn;
+    struct {
+      Entity current_entity;
+      Entity target_entity;
+    } entity_target_reached;
     struct {
       u32 target_id;
       u32 source_id;
