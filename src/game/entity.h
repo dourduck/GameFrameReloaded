@@ -4,8 +4,6 @@
 #include "./../engine/ecs/archetypes.h"
 #include "raylib.h"
 #include <math.h>
-// #define STB_DS_IMPLEMENTATION
-// #include "./../stb_ds.h"
 
 typedef struct {
   float x;
@@ -31,7 +29,10 @@ typedef struct {
 } StateMachine;
 
 typedef struct {
-  Position target_pos;
+  float x;
+  float y;
+  bool reached;
+  float reached_threshold;
 } Target;
 
 DECLARE_COMPONENT_ID(Position);
@@ -50,62 +51,48 @@ static void register_components() {
   REGISTER(Target);
 }
 
-typedef struct {
-  float vx;
-  float vy;
-} Vec2;
-
-static Vec2 direction_from_to(Position from, Position to) {
-  float dx = to.x - from.x;
-  float dy = to.y - from.y;
-  return (Vec2){.vx = dx, .vy = dy};
-}
-
-static Vec2 direction_normalized(Vec2 dir) {
-  float dx = dir.vx;
-  float dy = dir.vy;
-
-  float dxx = dx * dx;
-  float dyy = dy * dy;
-
-  float mag = sqrt(dxx + dyy);
-
-  float nx = dir.vx / mag;
-  float ny = dir.vy / mag;
-
-  return (Vec2){.vx = nx, .vy = ny};
-}
-
-/* Mutate in place */
-static void direction_normalize(Vec2 *out) {
-  float dx = out->vx;
-  float dy = out->vy;
-
-  float dxx = dx * dx;
-  float dyy = dy * dy;
-
-  float mag = sqrt(dxx + dyy);
-
-  float nx = dx / mag;
-  float ny = dy / mag;
-
-  out->vx = nx;
-  out->vy = ny;
-}
-
 /* Set the entity velocity based on the direction to given point */
-static void sys_vel_to_target_position(World *w, Archetype *a, void *userdata) {
+static void sys_vel_toward_target_position(World *w, Archetype *a,
+                                           void *userdata) {
   (void)w;
   (void)userdata;
+
   Target *targets = archetype_column(a, Target_id);
   Velocity *velocities = archetype_column(a, Velocity_id);
-  Position *positions = archetype_column(a, Velocity_id);
+  Position *positions = archetype_column(a, Position_id);
+  Speed *speeds = archetype_column(a, Speed_id);
+
   for (uint32_t i = 0; i < a->count; i++) {
-    targets[i].target_pos;
-    velocities[i].dx;
-    velocities[i].dy;
-    positions[i].x;
-    positions[i].y;
+    if (!targets[i].reached) {
+      continue;
+    }
+
+    /* calc direction to target */
+    float dx = targets[i].x - positions[i].x;
+    float dy = targets[i].y - positions[i].y;
+
+    /* calc magnitude of dir */
+    float dxx = dx * dx;
+    float dyy = dy * dy;
+    float mag = sqrt(dxx + dyy);
+
+    if (mag <= targets[i].reached_threshold) {
+      targets[i].reached = false;
+      velocities[i].dx = 0;
+      velocities[i].dy = 0;
+      continue;
+    }
+
+    /* normalize direction */
+    float nx = dx / mag;
+    float ny = dy / mag;
+
+    /* Apply speed to normalized direction */
+    float spd = speeds[i].speed;
+
+    /* Assign to velocity */
+    velocities[i].dx = nx * spd;
+    velocities[i].dy = ny * spd;
   }
 }
 
@@ -124,8 +111,10 @@ static void sys_render(World *w, Archetype *a, void *userdata) {
   (void)w;
   (void)userdata;
   Position *positions = archetype_column(a, Position_id);
+  Target *targets = archetype_column(a, Target_id);
   for (uint32_t i = 0; i < a->count; i++) {
     DrawCircle(positions[i].x, positions[i].y, 16, GREEN);
+    DrawCircle(targets[i].x, targets[i].y, 8, RED);
   }
 }
 
@@ -178,6 +167,13 @@ static Entity prefab_slime(World *world) {
   Position position = (Position){.x = 0, .y = 0};
   Velocity velocity = (Velocity){.dx = 0.0f, .dy = 0.0f};
   Health health = (Health){.hp = 20};
+  Target target = (Target){
+      .x = GetRandomValue(100, 700),
+      .y = GetRandomValue(50, 550),
+      .reached = true,
+      .reached_threshold = 10.0f,
+  };
+  Speed speed = (Speed){.speed = 100.0f};
 
   int state_table[8][8] = {
       /* happy | sleeping | hunting | eating | playing | wallowing | fighting |
@@ -210,7 +206,12 @@ static Entity prefab_slime(World *world) {
 
   world_add_component(world, slime, Position_id, &position);
   world_add_component(world, slime, Velocity_id, &velocity);
+
   world_add_component(world, slime, Health_id, &health);
+
+  world_add_component(world, slime, Target_id, &target);
+  world_add_component(world, slime, Speed_id, &speed);
+
   world_add_component(world, slime, StateMachine_id, &state_machine);
 
   return slime;
