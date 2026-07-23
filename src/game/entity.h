@@ -56,7 +56,6 @@ typedef struct {
 
 typedef struct {
   Entity entity;
-  Position position;
   bool reached;
   float reached_threshold;
 } Target;
@@ -91,22 +90,23 @@ static void sys_vel_toward_target_position(World *w, Archetype *a,
   Speed *speeds = archetype_column(a, Speed_id);
 
   for (uint32_t i = 0; i < a->count; i++) {
-    if (targets[i].reached) {
-      continue;
-    }
+    // if (targets[i].reached) {
+    //   continue;
+    // }
 
     /* calc direction to target */
-    float dx = (targets[i].position.x) - positions[i].x;
-    float dy = (targets[i].position.y) - positions[i].y;
+    Position *target_pos =
+        world_get_component(w, targets[i].entity, Position_id);
+    float dx = (target_pos->x) - positions[i].x;
+    float dy = (target_pos->y) - positions[i].y;
 
     /* calc magnitude of dir */
     float dxx = dx * dx;
     float dyy = dy * dy;
     float mag = sqrt(dxx + dyy);
 
-    if (mag <= targets[i].reached_threshold) {
+    if (mag <= targets[i].reached_threshold && !targets[i].reached) {
 
-      /* @current */
       Entity current_entity = a->entities[i];
       Entity target_entity = targets[i].entity;
 
@@ -149,6 +149,7 @@ static void sys_movement(World *w, Archetype *a, void *userdata) {
 static void sys_render(World *w, Archetype *a, void *userdata) {
   (void)w;
   (void)userdata;
+
   Position *positions = archetype_column(a, Position_id);
   BodyDebug *debug_bodies = archetype_column(a, BodyDebug_id);
 
@@ -233,7 +234,6 @@ static Entity prefab_slime(World *world) {
 
   Target target = (Target){
       .entity = target_entity,
-      .position = *target_position,
       .reached = false,
       .reached_threshold = 10.0f,
   };
