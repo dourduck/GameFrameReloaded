@@ -71,6 +71,12 @@ void on_target_reached(const Event *e, void *ctx) {
   float rand_x = (target_pos->x) + (GetRandomValue(0, 1) ? -25 : 25);
   float rand_y = (target_pos->y) + (GetRandomValue(0, 1) ? -25 : 25);
 
+  rand_x = rand_x > 800 ? (rand_x - 50) : rand_x;
+  rand_x = rand_x < 0 ? (rand_x + 50) : rand_x;
+
+  rand_y = rand_y > 600 ? (rand_y - 50) : rand_y;
+  rand_y = rand_y < 0 ? (rand_y + 50) : rand_y;
+
   Position new_pos = {.x = rand_x, .y = rand_y};
   Target new_target = {.entity = target->entity,
                        .reached = false,
