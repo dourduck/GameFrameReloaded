@@ -90,9 +90,9 @@ static void sys_vel_toward_target_position(World *w, Archetype *a,
   Speed *speeds = archetype_column(a, Speed_id);
 
   for (uint32_t i = 0; i < a->count; i++) {
-    // if (targets[i].reached) {
-    //   continue;
-    // }
+    if (targets[i].reached) {
+      continue;
+    }
 
     /* calc direction to target */
     Position *target_pos =

@@ -24,9 +24,9 @@ int main(void) {
 
   world_init(&world);
   // Entity player = prefab_player(&world);
-  Entity slimes[16] = {0};
+  Entity slimes[32] = {0};
 
-  for (int i = 0; i < 16; i++) {
+  for (int i = 0; i < 32; i++) {
     slimes[i] = prefab_slime(&world);
   }
 
