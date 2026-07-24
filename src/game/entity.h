@@ -73,6 +73,8 @@ typedef struct {
   float height;
   float offset_x;
   float offset_y;
+  int priority; /* Lower is higher priority (0-31)*/
+  Entity entity;
 } Selectable;
 
 DECLARE_COMPONENT_ID(Position);
@@ -105,11 +107,16 @@ static void sys_selection_check(World *w, Archetype *a, void *userdata) {
   Position *positions = archetype_column(a, Position_id);
   Selectable *selectables = archetype_column(a, Selectable_id);
 
+  const int max_selections = 32;
+  Selectable *selections[max_selections];
+  int selection_count = 0;
+
   for (uint32_t i = 0; i < a->count; i++) {
     bool mouse_pressed = IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
     if (!mouse_pressed) {
       continue;
     }
+    selectables[i].selected = false;
 
     Vector2 mouse_pos = GetMousePosition();
 
@@ -121,16 +128,56 @@ static void sys_selection_check(World *w, Archetype *a, void *userdata) {
     };
 
     if (CheckCollisionPointRec(mouse_pos, r)) {
-      Event *e = event_arena_alloc(sizeof(Event));
-      e->type = EVENT_ENTITY_SELECTED;
-      e->data.entity_selected.entity = a->entities[i];
-      e->data.entity_selected.pos_x = positions[i].x;
-      e->data.entity_selected.pos_y = positions[i].y;
-      event_queue_push(event_queue, e);
 
-      selectables[i].selected = true;
-    } else {
-      selectables[i].selected = false;
+      if (selection_count < max_selections) {
+        // selectables[i].selected = true;
+        // selectables[i].entity = a->entities[i];
+        selections[selection_count++] = &selectables[i];
+      }
+    }
+  }
+
+  if (!selection_count) {
+    return;
+  }
+
+  /* bubble sort */
+  for (int i = 0; i < (selection_count - 1); i++) {
+    int swapped = 0;
+
+    for (int j = 0; j < selection_count - i - 1; j++) {
+      if (selections[j]->priority > selections[j + 1]->priority) {
+        /* swap selections[j] with selections[j + 1] */
+
+        Selectable *temp = selections[j];
+        selections[j] = selections[j + 1];
+        selections[j + 1] = temp;
+        swapped = 1;
+      }
+    }
+
+    if (!swapped) {
+      break;
+    }
+  }
+
+  printf("Selection priorities: ");
+  for (int i = 0; i < selection_count; i++) {
+    printf("%d, ", selections[i]->priority);
+  }
+  printf("\n");
+
+  for (int i = 0; i < selection_count; i++) {
+    selections[i]->selected = true;
+
+    Event *e = event_arena_alloc(sizeof(Event));
+    e->type = EVENT_ENTITY_SELECTED;
+    e->data.entity_selected.entity = selections[i]->entity;
+    event_queue_push(event_queue, e);
+
+    if (i + 1 < selection_count &&
+        selections[i]->priority < selections[i + 1]->priority) {
+      break;
     }
   }
 }
@@ -344,6 +391,36 @@ static Entity prefab_target(World *world, float x, float y) {
   return target;
 }
 
+static Entity prefab_ui_button(World *world) {
+  Entity button = entity_create(world);
+
+  int width = 200;
+  int height = 100;
+  int line_thickness = 4;
+
+  Position position =
+      (Position){.x = 400 - (width * 0.5f), .y = (300 - (height * 0.5f))};
+
+  BodyDebug body_debug =
+      (BodyDebug){.color = SKYBLUE, .radius = (height * 0.5f) - line_thickness};
+
+  Selectable selectable = (Selectable){
+      .width = width,
+      .height = height,
+      .offset_x = -(width * 0.5f),
+      .offset_y = -(height * 0.5f),
+      .selected = true,
+      .entity = button,
+      .priority = 0,
+  };
+
+  world_add_component(world, button, Position_id, &position);
+  world_add_component(world, button, BodyDebug_id, &body_debug);
+  world_add_component(world, button, Selectable_id, &selectable);
+
+  return button;
+}
+
 static Entity prefab_slime(World *world) {
   Entity slime = entity_create(world);
 
@@ -376,6 +453,8 @@ static Entity prefab_slime(World *world) {
       .offset_x = -(collider.radius),
       .offset_y = -(collider.radius),
       .selected = false,
+      .entity = slime,
+      .priority = 10,
   };
 
   world_add_component(world, slime, Position_id, &position);

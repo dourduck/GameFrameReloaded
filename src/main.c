@@ -8,6 +8,7 @@
 #include <string.h>
 
 void on_target_reached(const Event *e, void *ctx);
+void on_selected(const Event *e, void *ctx);
 
 int main(void) {
   Environment env = Environment_CreateDefault();
@@ -30,9 +31,12 @@ int main(void) {
     slimes[i] = prefab_slime(&world);
   }
 
+  Entity button = prefab_ui_button(&world);
+
   // typedef void (*EventCallback)(const Event *event, void* ctx);
   event_subscribe(&event_bus, EVENT_ENTITY_TARGET_REACHED, on_target_reached,
                   &world);
+  event_subscribe(&event_bus, EVENT_ENTITY_SELECTED, on_selected, &world);
 
   while (!WindowShouldClose()) {
     float dt = GetFrameTime();
@@ -50,6 +54,7 @@ int main(void) {
     /* movement */
     world_query(&world, (BIT(Position_id) | BIT(Velocity_id)), sys_movement,
                 &dt);
+
     /* selection check */
     world_query(&world, (BIT(Position_id) | BIT(Selectable_id)),
                 sys_selection_check, &event_queue);
@@ -69,6 +74,12 @@ int main(void) {
   }
 
   event_unsubscribe(&event_bus, EVENT_ENTITY_TARGET_REACHED, on_target_reached);
+  event_unsubscribe(&event_bus, EVENT_ENTITY_SELECTED, on_selected);
+}
+
+void on_selected(const Event *e, void *ctx) {
+  (void)ctx;
+  printf("Selected Entity: %d\n", (e->data.entity_selected.entity.index));
 }
 
 void on_target_reached(const Event *e, void *ctx) {
