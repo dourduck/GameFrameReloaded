@@ -42,8 +42,14 @@ int main(void) {
         (BIT(Position_id) | BIT(Velocity_id) | BIT(Target_id) | BIT(Speed_id)),
         sys_vel_toward_target_position, &event_queue);
 
+    world_query(
+        &world,
+        (BIT(Position_id) | BIT(Collider_id)),
+        sys_collision, NULL);
+
     world_query(&world, (BIT(Position_id) | BIT(Velocity_id)), sys_movement,
                 &dt);
+
 
     event_queue_flush(&event_queue);
     event_arena_free();
@@ -68,22 +74,16 @@ void on_target_reached(const Event *e, void *ctx) {
   Position *target_pos = world_get_component(
       w, e->data.entity_target_reached.target_entity, Position_id);
 
-  float rand_x = (target_pos->x) + (GetRandomValue(0, 1) ? -25 : 25);
-  float rand_y = (target_pos->y) + (GetRandomValue(0, 1) ? -25 : 25);
+  float rand_x = target_pos->x + (GetRandomValue(0, 1) ? -25 : 25);
+  float rand_y = target_pos->y + (GetRandomValue(0, 1) ? -25 : 25);
 
-  rand_x = rand_x > 800 ? (rand_x - 50) : rand_x;
-  rand_x = rand_x < 0 ? (rand_x + 50) : rand_x;
+  rand_x = rand_x > 800 ? (rand_x - 50) : rand_x < 0 ? (rand_x + 50) : rand_x;
+  rand_y = rand_y > 600 ? (rand_y - 50) : rand_y < 0 ? (rand_y + 50) : rand_y;
 
-  rand_y = rand_y > 600 ? (rand_y - 50) : rand_y;
-  rand_y = rand_y < 0 ? (rand_y + 50) : rand_y;
+  target_pos->x = rand_x;
+  target_pos->y = rand_y;
 
-  Position new_pos = {.x = rand_x, .y = rand_y};
-  Target new_target = {.entity = target->entity,
-                       .reached = false,
-                       .reached_threshold = target->reached_threshold};
-
-  memcpy(target_pos, &new_pos, sizeof(Position));
-  memcpy(target, &new_target, sizeof(Target));
+  target->reached = false;
 }
 
 /* vim:set ts=3 sw=2 sts=2 et: */

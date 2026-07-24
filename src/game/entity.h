@@ -1,6 +1,7 @@
 #ifndef ENTITY_H
 #define ENTITY_H
 
+#include <stdint.h>
 #include <stdio.h>
 #define ARENA_IMPLEMENTATION
 #include "./../engine/arena/arena.h"
@@ -10,6 +11,7 @@
 
 #include "raylib.h"
 #include <assert.h>
+#include <float.h>
 #include <math.h>
 #include <stddef.h>
 
@@ -60,6 +62,10 @@ typedef struct {
   float reached_threshold;
 } Target;
 
+typedef struct {
+  float radius;
+} Collider;
+
 DECLARE_COMPONENT_ID(Position);
 DECLARE_COMPONENT_ID(Velocity);
 DECLARE_COMPONENT_ID(Health);
@@ -67,6 +73,7 @@ DECLARE_COMPONENT_ID(Speed);
 DECLARE_COMPONENT_ID(StateMachine);
 DECLARE_COMPONENT_ID(Target);
 DECLARE_COMPONENT_ID(BodyDebug);
+DECLARE_COMPONENT_ID(Collider);
 
 static void register_components() {
   REGISTER(Position);
@@ -76,6 +83,7 @@ static void register_components() {
   REGISTER(StateMachine);
   REGISTER(Target);
   REGISTER(BodyDebug);
+  REGISTER(Collider);
 }
 
 /* Set the entity velocity based on the direction to given point */
@@ -132,6 +140,77 @@ static void sys_vel_toward_target_position(World *w, Archetype *a,
     /* Assign to velocity */
     velocities[i].dx = nx * spd;
     velocities[i].dy = ny * spd;
+  }
+}
+
+/* [NAIVE IMPLEMENTATION] */
+static void sys_collision(World *w, Archetype *a, void *userdata) {
+  (void)w;
+  (void)userdata;
+
+  Position *positions = archetype_column(a, Position_id);
+  Collider *colliders = archetype_column(a, Collider_id);
+  Velocity *velocities = archetype_column(a, Velocity_id);
+
+  for (uint32_t i = 0; i < a->count; i++) {
+    float ix = positions[i].x;
+    float iy = positions[i].y;
+
+    // float min_mag = FLT_MAX;
+    // int32_t min_j_idx = -1;
+    // float min_dir_x = 0;
+    // float min_dir_y = 0;
+    // float min_radius = 0;
+
+    for (uint32_t j = 0; j < a->count; j++) {
+      if (j == i) {
+        continue;
+      }
+
+      float jx = positions[j].x;
+      float jy = positions[j].y;
+
+      float dir_x = jx - ix;
+      float dir_y = jy - iy;
+
+      float mag = sqrt((dir_x * dir_x) + (dir_y * dir_y));
+
+      float collider_radius = (colliders[i].radius * 1.25f);
+
+      if (mag < collider_radius) {
+        if (mag > 0.0001f) {
+          /* normalize and invert then scale to correct position*/
+          positions[i].x += -(dir_x / mag) * collider_radius * 0.1f;
+          positions[i].y += -(dir_y / mag) * collider_radius * 0.1f;
+
+          positions[j].x += (dir_x / mag) * collider_radius * 0.1f;
+          positions[j].y += (dir_y / mag) * collider_radius * 0.1f;
+
+          // velocities[i].dx += (dir_x / mag) * 10;
+          // velocities[i].dy += (dir_x / mag) * 10;
+          //
+          // velocities[j].dx += -(dir_x / mag) * 10;
+          // velocities[j].dy += -(dir_x / mag) * 10;
+        } else {
+          positions[i].x +=
+              (colliders[i].radius) * (GetRandomValue(0, 1) ? 1 : -1);
+          positions[i].y +=
+              (colliders[i].radius) * (GetRandomValue(0, 1) ? 1 : -1);
+
+          // positions[i].x += (collider_radius_sum*2);
+        }
+
+        // if (mag < min_mag) {
+        //   min_mag = mag;
+        //   min_dir_x = dir_x;
+        //   min_dir_y = dir_y;
+        //   min_radius = colliders[j].radius;
+        //   // min_j_idx = j;
+        // }
+      }
+      // TODO: Figure out why this is failing
+      // assert(min_j_idx > -1);
+    }
   }
 }
 
@@ -223,6 +302,8 @@ static Entity prefab_slime(World *world) {
   // Health health = (Health){.hp = 20};
   BodyDebug body_debug = (BodyDebug){.color = DARKGREEN, .radius = 16};
 
+  Collider collider = (Collider){.radius = 16};
+
   float target_x = GetRandomValue(200, 600);
   float target_y = GetRandomValue(150, 450);
   Entity target_entity = prefab_target(world, target_x, target_y);
@@ -244,6 +325,8 @@ static Entity prefab_slime(World *world) {
   world_add_component(world, slime, BodyDebug_id, &body_debug);
 
   world_add_component(world, slime, Target_id, &target);
+
+  world_add_component(world, slime, Collider_id, &collider);
 
   // world_add_component(world, slime, Health_id, &health);
 
