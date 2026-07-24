@@ -37,19 +37,22 @@ int main(void) {
   while (!WindowShouldClose()) {
     float dt = GetFrameTime();
 
+    /* velocity toward target */
     world_query(
         &world,
         (BIT(Position_id) | BIT(Velocity_id) | BIT(Target_id) | BIT(Speed_id)),
         sys_vel_toward_target_position, &event_queue);
 
-    world_query(
-        &world,
-        (BIT(Position_id) | BIT(Collider_id)),
-        sys_collision, NULL);
+    /* collision check */
+    world_query(&world, (BIT(Position_id) | BIT(Collider_id)), sys_collision,
+                NULL);
 
+    /* movement */
     world_query(&world, (BIT(Position_id) | BIT(Velocity_id)), sys_movement,
                 &dt);
-
+    /* selection check */
+    world_query(&world, (BIT(Position_id) | BIT(Selectable_id)),
+                sys_selection_check, &event_queue);
 
     event_queue_flush(&event_queue);
     event_arena_free();
@@ -58,6 +61,9 @@ int main(void) {
     ClearBackground(GRAY);
     world_query(&world, (BIT(Position_id) | BIT(BodyDebug_id)), sys_render,
                 NULL);
+
+    world_query(&world, (BIT(Position_id) | BIT(Selectable_id)),
+                sys_render_selections, NULL);
 
     EndDrawing();
   }

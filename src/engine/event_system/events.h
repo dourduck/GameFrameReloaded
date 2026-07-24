@@ -19,6 +19,7 @@ typedef enum {
   EVENT_ENTITY_DIED,
   EVENT_ENTITY_SPAWNED,
   EVENT_ENTITY_TARGET_REACHED,
+  EVENT_ENTITY_SELECTED,
   EVENT_DAMAGE_DEALT,
   EVENT_ITEM_PICKED_UP,
 
@@ -64,6 +65,11 @@ typedef struct {
       Entity current_entity;
       Entity target_entity;
     } entity_target_reached;
+    struct {
+      Entity entity;
+      float pos_x;
+      float pos_y;
+    } entity_selected;
     struct {
       u32 target_id;
       u32 source_id;

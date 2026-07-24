@@ -1,6 +1,7 @@
 #ifndef ENTITY_H
 #define ENTITY_H
 
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #define ARENA_IMPLEMENTATION
@@ -66,6 +67,14 @@ typedef struct {
   float radius;
 } Collider;
 
+typedef struct {
+  bool selected;
+  float width;
+  float height;
+  float offset_x;
+  float offset_y;
+} Selectable;
+
 DECLARE_COMPONENT_ID(Position);
 DECLARE_COMPONENT_ID(Velocity);
 DECLARE_COMPONENT_ID(Health);
@@ -74,6 +83,7 @@ DECLARE_COMPONENT_ID(StateMachine);
 DECLARE_COMPONENT_ID(Target);
 DECLARE_COMPONENT_ID(BodyDebug);
 DECLARE_COMPONENT_ID(Collider);
+DECLARE_COMPONENT_ID(Selectable);
 
 static void register_components() {
   REGISTER(Position);
@@ -84,6 +94,64 @@ static void register_components() {
   REGISTER(Target);
   REGISTER(BodyDebug);
   REGISTER(Collider);
+  REGISTER(Selectable);
+}
+
+/* Set the entity velocity based on the direction to given point */
+static void sys_selection_check(World *w, Archetype *a, void *userdata) {
+  (void)w;
+  EventQueue *event_queue = userdata;
+
+  Position *positions = archetype_column(a, Position_id);
+  Selectable *selectables = archetype_column(a, Selectable_id);
+
+  for (uint32_t i = 0; i < a->count; i++) {
+    bool mouse_pressed = IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
+    if (!mouse_pressed) {
+      continue;
+    }
+
+    Vector2 mouse_pos = GetMousePosition();
+
+    Rectangle r = (Rectangle){
+        .x = positions[i].x + selectables[i].offset_x,
+        .y = positions[i].y + selectables[i].offset_y,
+        .width = selectables[i].width,
+        .height = selectables[i].height,
+    };
+
+    if (CheckCollisionPointRec(mouse_pos, r)) {
+      Event *e = event_arena_alloc(sizeof(Event));
+      e->type = EVENT_ENTITY_SELECTED;
+      e->data.entity_selected.entity = a->entities[i];
+      e->data.entity_selected.pos_x = positions[i].x;
+      e->data.entity_selected.pos_y = positions[i].y;
+      event_queue_push(event_queue, e);
+
+      selectables[i].selected = true;
+    } else {
+      selectables[i].selected = false;
+    }
+  }
+}
+static void sys_render_selections(World *w, Archetype *a, void *userdata) {
+  (void)w;
+  (void)userdata;
+
+  Position *positions = archetype_column(a, Position_id);
+  Selectable *selectables = archetype_column(a, Selectable_id);
+
+  for (uint32_t i = 0; i < a->count; i++) {
+    if (selectables[i].selected) {
+      Rectangle r = (Rectangle){
+          .x = positions[i].x + selectables[i].offset_x,
+          .y = positions[i].y + selectables[i].offset_y,
+          .width = selectables[i].width,
+          .height = selectables[i].height,
+      };
+      DrawRectangleLinesEx(r, 4, GREEN);
+    }
+  }
 }
 
 /* Set the entity velocity based on the direction to given point */
@@ -156,12 +224,6 @@ static void sys_collision(World *w, Archetype *a, void *userdata) {
     float ix = positions[i].x;
     float iy = positions[i].y;
 
-    // float min_mag = FLT_MAX;
-    // int32_t min_j_idx = -1;
-    // float min_dir_x = 0;
-    // float min_dir_y = 0;
-    // float min_radius = 0;
-
     for (uint32_t j = 0; j < a->count; j++) {
       if (j == i) {
         continue;
@@ -186,30 +248,19 @@ static void sys_collision(World *w, Archetype *a, void *userdata) {
           positions[j].x += (dir_x / mag) * collider_radius * 0.1f;
           positions[j].y += (dir_y / mag) * collider_radius * 0.1f;
 
-          // velocities[i].dx += (dir_x / mag) * 10;
-          // velocities[i].dy += (dir_x / mag) * 10;
-          //
-          // velocities[j].dx += -(dir_x / mag) * 10;
-          // velocities[j].dy += -(dir_x / mag) * 10;
+          velocities[i].dx += -(dir_x / mag) * 10;
+          velocities[i].dy += -(dir_y / mag) * 10;
+
+          velocities[j].dx += (dir_x / mag) * 10;
+          velocities[j].dy += (dir_y / mag) * 10;
+
         } else {
           positions[i].x +=
               (colliders[i].radius) * (GetRandomValue(0, 1) ? 1 : -1);
           positions[i].y +=
               (colliders[i].radius) * (GetRandomValue(0, 1) ? 1 : -1);
-
-          // positions[i].x += (collider_radius_sum*2);
         }
-
-        // if (mag < min_mag) {
-        //   min_mag = mag;
-        //   min_dir_x = dir_x;
-        //   min_dir_y = dir_y;
-        //   min_radius = colliders[j].radius;
-        //   // min_j_idx = j;
-        // }
       }
-      // TODO: Figure out why this is failing
-      // assert(min_j_idx > -1);
     }
   }
 }
@@ -300,9 +351,9 @@ static Entity prefab_slime(World *world) {
   Velocity velocity = (Velocity){.dx = 0.0f, .dy = 0.0f};
   Speed speed = (Speed){.speed = 100.0f};
   // Health health = (Health){.hp = 20};
-  BodyDebug body_debug = (BodyDebug){.color = DARKGREEN, .radius = 16};
-
-  Collider collider = (Collider){.radius = 16};
+  Collider collider = (Collider){.radius = 32};
+  BodyDebug body_debug =
+      (BodyDebug){.color = DARKGREEN, .radius = collider.radius};
 
   float target_x = GetRandomValue(200, 600);
   float target_y = GetRandomValue(150, 450);
@@ -319,6 +370,14 @@ static Entity prefab_slime(World *world) {
       .reached_threshold = 10.0f,
   };
 
+  Selectable selectable = (Selectable){
+      .width = collider.radius * 2,
+      .height = collider.radius * 2,
+      .offset_x = -(collider.radius),
+      .offset_y = -(collider.radius),
+      .selected = false,
+  };
+
   world_add_component(world, slime, Position_id, &position);
   world_add_component(world, slime, Velocity_id, &velocity);
   world_add_component(world, slime, Speed_id, &speed);
@@ -327,6 +386,7 @@ static Entity prefab_slime(World *world) {
   world_add_component(world, slime, Target_id, &target);
 
   world_add_component(world, slime, Collider_id, &collider);
+  world_add_component(world, slime, Selectable_id, &selectable);
 
   // world_add_component(world, slime, Health_id, &health);
 
