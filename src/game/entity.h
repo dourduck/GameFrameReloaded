@@ -117,7 +117,7 @@ SelectableCtx selectable_ctx_init(EventQueue *q) {
   return ctx;
 }
 
-static void sys_collect_selectables(World *w, Archetype *a, void *userdata) {
+static void sys_selectables(World *w, Archetype *a, void *userdata) {
   bool mouse_pressed = IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
 
   if (!mouse_pressed) {
@@ -150,7 +150,7 @@ static void sys_collect_selectables(World *w, Archetype *a, void *userdata) {
   }
 }
 
-void process_selectables(SelectableCtx *ctx) {
+void selectables_resolve(SelectableCtx *ctx) {
   if (!ctx->count) {
     return;
   }
@@ -175,11 +175,11 @@ void process_selectables(SelectableCtx *ctx) {
     }
   }
 
-  printf("Selection priorities: ");
-  for (int i = 0; i < ctx->count; i++) {
-    printf("%d, ", ctx->selections[i]->priority);
-  }
-  printf("\n");
+  // printf("Selection priorities: ");
+  // for (int i = 0; i < ctx->count; i++) {
+  //   printf("%d, ", ctx->selections[i]->priority);
+  // }
+  // printf("\n");
 
   for (int i = 0; i < ctx->count; i++) {
     ctx->selections[i]->selected = true;

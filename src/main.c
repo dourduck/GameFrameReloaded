@@ -59,9 +59,9 @@ int main(void) {
 
     /* selection collection */
     world_query(&world, (BIT(Position_id) | BIT(Selectable_id)),
-                sys_collect_selectables, &selectable_ctx);
+                sys_selectables, &selectable_ctx);
     /* selection priority filter */
-    process_selectables(&selectable_ctx);
+    selectables_resolve(&selectable_ctx);
 
     event_queue_flush(&event_queue);
     event_arena_free();
@@ -84,6 +84,7 @@ int main(void) {
 void on_selected(const Event *e, void *ctx) {
   (void)ctx;
   printf("Selected Entity: %d\n", (e->data.entity_selected.entity.index));
+  /* TODO: Wire to slime status menu */
 }
 
 void on_target_reached(const Event *e, void *ctx) {
