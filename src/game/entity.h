@@ -99,23 +99,38 @@ static void register_components() {
   REGISTER(Selectable);
 }
 
-/* Set the entity velocity based on the direction to given point */
-static void sys_selection_check(World *w, Archetype *a, void *userdata) {
+#define SELECTABLE_MAX 32
+
+typedef struct {
+  EventQueue *event_queue;
+  Selectable *selections[SELECTABLE_MAX];
+  int count;
+} SelectableCtx;
+
+SelectableCtx selectable_ctx_init(EventQueue *q) {
+  SelectableCtx ctx = (SelectableCtx){
+      .event_queue = q,
+      .count = 0,
+      .selections = {0},
+  };
+
+  return ctx;
+}
+
+static void sys_collect_selectables(World *w, Archetype *a, void *userdata) {
+  bool mouse_pressed = IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
+
+  if (!mouse_pressed) {
+    return;
+  }
+
   (void)w;
-  EventQueue *event_queue = userdata;
+  SelectableCtx *ctx = userdata;
 
   Position *positions = archetype_column(a, Position_id);
   Selectable *selectables = archetype_column(a, Selectable_id);
 
-  const int max_selections = 32;
-  Selectable *selections[max_selections];
-  int selection_count = 0;
-
   for (uint32_t i = 0; i < a->count; i++) {
-    bool mouse_pressed = IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
-    if (!mouse_pressed) {
-      continue;
-    }
     selectables[i].selected = false;
 
     Vector2 mouse_pos = GetMousePosition();
@@ -128,30 +143,29 @@ static void sys_selection_check(World *w, Archetype *a, void *userdata) {
     };
 
     if (CheckCollisionPointRec(mouse_pos, r)) {
-
-      if (selection_count < max_selections) {
-        // selectables[i].selected = true;
-        // selectables[i].entity = a->entities[i];
-        selections[selection_count++] = &selectables[i];
+      if (ctx->count < SELECTABLE_MAX) {
+        ctx->selections[ctx->count++] = &selectables[i];
       }
     }
   }
+}
 
-  if (!selection_count) {
+void process_selectables(SelectableCtx *ctx) {
+  if (!ctx->count) {
     return;
   }
 
   /* bubble sort */
-  for (int i = 0; i < (selection_count - 1); i++) {
+  for (int i = 0; i < (ctx->count - 1); i++) {
     int swapped = 0;
 
-    for (int j = 0; j < selection_count - i - 1; j++) {
-      if (selections[j]->priority > selections[j + 1]->priority) {
+    for (int j = 0; j < (ctx->count - i - 1); j++) {
+      if (ctx->selections[j]->priority > ctx->selections[j + 1]->priority) {
         /* swap selections[j] with selections[j + 1] */
 
-        Selectable *temp = selections[j];
-        selections[j] = selections[j + 1];
-        selections[j + 1] = temp;
+        Selectable *temp = ctx->selections[j];
+        ctx->selections[j] = ctx->selections[j + 1];
+        ctx->selections[j + 1] = temp;
         swapped = 1;
       }
     }
@@ -162,25 +176,27 @@ static void sys_selection_check(World *w, Archetype *a, void *userdata) {
   }
 
   printf("Selection priorities: ");
-  for (int i = 0; i < selection_count; i++) {
-    printf("%d, ", selections[i]->priority);
+  for (int i = 0; i < ctx->count; i++) {
+    printf("%d, ", ctx->selections[i]->priority);
   }
   printf("\n");
 
-  for (int i = 0; i < selection_count; i++) {
-    selections[i]->selected = true;
+  for (int i = 0; i < ctx->count; i++) {
+    ctx->selections[i]->selected = true;
 
     Event *e = event_arena_alloc(sizeof(Event));
     e->type = EVENT_ENTITY_SELECTED;
-    e->data.entity_selected.entity = selections[i]->entity;
-    event_queue_push(event_queue, e);
+    e->data.entity_selected.entity = ctx->selections[i]->entity;
+    event_queue_push(ctx->event_queue, e);
 
-    if (i + 1 < selection_count &&
-        selections[i]->priority < selections[i + 1]->priority) {
+    if (i + 1 < ctx->count &&
+        ctx->selections[i]->priority < ctx->selections[i + 1]->priority) {
       break;
     }
   }
+  ctx->count = 0;
 }
+
 static void sys_render_selections(World *w, Archetype *a, void *userdata) {
   (void)w;
   (void)userdata;

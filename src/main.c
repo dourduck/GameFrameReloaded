@@ -38,6 +38,8 @@ int main(void) {
                   &world);
   event_subscribe(&event_bus, EVENT_ENTITY_SELECTED, on_selected, &world);
 
+  SelectableCtx selectable_ctx = selectable_ctx_init(&event_queue);
+
   while (!WindowShouldClose()) {
     float dt = GetFrameTime();
 
@@ -55,9 +57,11 @@ int main(void) {
     world_query(&world, (BIT(Position_id) | BIT(Velocity_id)), sys_movement,
                 &dt);
 
-    /* selection check */
+    /* selection collection */
     world_query(&world, (BIT(Position_id) | BIT(Selectable_id)),
-                sys_selection_check, &event_queue);
+                sys_collect_selectables, &selectable_ctx);
+    /* selection priority filter */
+    process_selectables(&selectable_ctx);
 
     event_queue_flush(&event_queue);
     event_arena_free();
