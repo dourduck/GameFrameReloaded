@@ -4,8 +4,9 @@
 #include "engine/event_system/event_bus.h"
 #include "engine/event_system/event_queue.h"
 #include "game/game.h"
-#include "raylib.h"
 #include <string.h>
+
+#include "raylib.h"
 
 void on_target_reached(const Event *e, void *ctx);
 void on_selected(const Event *e, void *ctx);
@@ -73,6 +74,10 @@ int main(void) {
 
     world_query(&world, (BIT(Position_id) | BIT(Selectable_id)),
                 sys_render_selections, NULL);
+
+    world_query(&world,
+                (BIT(Position_id) | BIT(Selectable_id) | BIT(Button_id)),
+                sys_ui_buttons, NULL);
 
     EndDrawing();
   }

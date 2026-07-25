@@ -16,6 +16,9 @@
 #include <math.h>
 #include <stddef.h>
 
+#define RAYGUI_IMPLEMENTATION
+#include "../raygui.h"
+
 static Arena event_arena = {0};
 static Arena *event_arena_ptr = &event_arena;
 
@@ -77,6 +80,13 @@ typedef struct {
   Entity entity;
 } Selectable;
 
+typedef struct {
+  float w;
+  float h;
+
+  const char *text;
+} Button;
+
 DECLARE_COMPONENT_ID(Position);
 DECLARE_COMPONENT_ID(Velocity);
 DECLARE_COMPONENT_ID(Health);
@@ -86,6 +96,7 @@ DECLARE_COMPONENT_ID(Target);
 DECLARE_COMPONENT_ID(BodyDebug);
 DECLARE_COMPONENT_ID(Collider);
 DECLARE_COMPONENT_ID(Selectable);
+DECLARE_COMPONENT_ID(Button);
 
 static void register_components() {
   REGISTER(Position);
@@ -97,6 +108,7 @@ static void register_components() {
   REGISTER(BodyDebug);
   REGISTER(Collider);
   REGISTER(Selectable);
+  REGISTER(Button);
 }
 
 #define SELECTABLE_MAX 32
@@ -213,6 +225,29 @@ static void sys_render_selections(World *w, Archetype *a, void *userdata) {
           .height = selectables[i].height,
       };
       DrawRectangleLinesEx(r, 4, GREEN);
+    }
+  }
+}
+
+static void sys_ui_buttons(World *w, Archetype *a, void *userdata) {
+
+  (void)w;
+  (void)userdata;
+
+  Position *positions = archetype_column(a, Position_id);
+  Selectable *selectables = archetype_column(a, Selectable_id);
+  Button *buttons = archetype_column(a, Button_id);
+
+  for (uint32_t i = 0; i < a->count; i++) {
+    Button btn = buttons[i];
+    Position pos = positions[i];
+    Selectable selectable = selectables[i];
+
+    if (GuiButton(
+            (Rectangle){
+                .x = pos.x, .y = pos.y, .width = btn.w, .height = btn.h},
+            btn.text)) {
+      printf("Button pressed!\n");
     }
   }
 }
@@ -408,33 +443,34 @@ static Entity prefab_target(World *world, float x, float y) {
 }
 
 static Entity prefab_ui_button(World *world) {
-  Entity button = entity_create(world);
+  Entity btn_entity = entity_create(world);
 
   int width = 200;
   int height = 100;
-  int line_thickness = 4;
 
-  Position position =
-      (Position){.x = 400 - (width * 0.5f), .y = (300 - (height * 0.5f))};
+  Position position = (Position){.x = 400, .y = 300};
 
-  BodyDebug body_debug =
-      (BodyDebug){.color = SKYBLUE, .radius = (height * 0.5f) - line_thickness};
+  Button btn_component = (Button){.w = width,
+                                  .h = height,
+                                  .text = "Use Potion or Something :P"};
 
   Selectable selectable = (Selectable){
       .width = width,
       .height = height,
-      .offset_x = -(width * 0.5f),
-      .offset_y = -(height * 0.5f),
+      // .offset_x = -(width * 0.5f),
+      // .offset_y = -(height * 0.5f),
+      .offset_x = 0,
+      .offset_y = 0,
       .selected = true,
-      .entity = button,
+      .entity = btn_entity,
       .priority = 0,
   };
 
-  world_add_component(world, button, Position_id, &position);
-  world_add_component(world, button, BodyDebug_id, &body_debug);
-  world_add_component(world, button, Selectable_id, &selectable);
+  world_add_component(world, btn_entity, Position_id, &position);
+  world_add_component(world, btn_entity, Selectable_id, &selectable);
+  world_add_component(world, btn_entity, Button_id, &btn_component);
 
-  return button;
+  return btn_entity;
 }
 
 static Entity prefab_slime(World *world) {
