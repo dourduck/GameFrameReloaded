@@ -553,7 +553,7 @@ static Entity prefab_ui_stat_menu(World *world) {
   float pos_x = GetScreenWidth() - width;
   float pos_y = 0;
 
-  Position position = (Position){.x=pos_x,.y=pos_y};
+  Position position = (Position){.x = pos_x, .y = pos_y};
 
   Selectable selectable = (Selectable){
       .selected = false,
@@ -565,7 +565,6 @@ static Entity prefab_ui_stat_menu(World *world) {
       .entity = menu,
       .type = SELECTION_PANEL,
   };
-
 
   Panel panel = (Panel){
       .color =

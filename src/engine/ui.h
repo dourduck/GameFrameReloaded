@@ -3,7 +3,6 @@
 
 #include "raylib.h"
 #define RAYGUI_IMPLEMENTATION
-// #include "../engine/event_system/event_queue.h"
 #include "../game/entity.h"
 #include "../raygui.h"
 

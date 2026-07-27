@@ -76,16 +76,15 @@ int main(void) {
     world_query(&world, (BIT(Position_id) | BIT(BodyDebug_id)), sys_render,
                 NULL);
 
-    world_query(&world, (BIT(Position_id) | BIT(Selectable_id)),
-                sys_render_selections, NULL);
-
-    world_query(&world,
-                (BIT(Position_id) | BIT(Selectable_id) | BIT(Panel_id)),
+    world_query(&world, (BIT(Position_id) | BIT(Selectable_id) | BIT(Panel_id)),
                 sys_ui_panels, NULL);
 
     world_query(&world,
                 (BIT(Position_id) | BIT(Selectable_id) | BIT(Button_id)),
                 sys_ui_buttons, NULL);
+
+    world_query(&world, (BIT(Position_id) | BIT(Selectable_id)),
+                sys_render_selections, NULL);
 
     EndDrawing();
   }
