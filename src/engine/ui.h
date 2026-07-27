@@ -16,7 +16,8 @@ void ui_button_impl(Selectable selectable, Button btn_component, Position pos) {
 
   if (GuiButton(r, txt)) {
     /* gameplay code can be done in the selection system pass to queue button press event*/
-    // printf("ASDF!!!!\n");
+    /* this could be a good spot for general effects when a button is pressed such as sound */
+    /* WARNING: GAMEPLAY CODE SHOULD NOT GO HERE!*/
   }
 }
 

@@ -79,10 +79,6 @@ int main(void) {
     world_query(&world, (BIT(Position_id) | BIT(Selectable_id) | BIT(Button_id)),
                 sys_ui_buttons, NULL);
 
-    // world_query(&world,
-    //             (BIT(Position_id) | BIT(Selectable_id) | BIT(Button_id)),
-    //             sys_ui_buttons, NULL);
-
     EndDrawing();
   }
 
@@ -92,7 +88,6 @@ int main(void) {
 
 void on_entity_selected(const Event *e, void *ctx) {
   (void)ctx;
-  // printf("Selected Entity: %d\n", (e->data.entity_selection_data.entity.index));
 
   switch (e->data.entity_selection_data.type){
     case SELECTION_BUTTON:

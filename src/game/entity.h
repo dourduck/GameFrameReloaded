@@ -16,9 +16,6 @@
 #include <math.h>
 #include <stddef.h>
 
-// #define RAYGUI_IMPLEMENTATION
-// #include "../raygui.h"
-
 static Arena event_arena = {0};
 static Arena *event_arena_ptr = &event_arena;
 
@@ -230,29 +227,6 @@ static void sys_render_selections(World *w, Archetype *a, void *userdata) {
     }
   }
 }
-
-// static void sys_ui_buttons(World *w, Archetype *a, void *userdata) {
-//
-//   (void)w;
-//   (void)userdata;
-//
-//   Position *positions = archetype_column(a, Position_id);
-//   Selectable *selectables = archetype_column(a, Selectable_id);
-//   Button *buttons = archetype_column(a, Button_id);
-//
-//   for (uint32_t i = 0; i < a->count; i++) {
-//     Button btn = buttons[i];
-//     Position pos = positions[i];
-//     Selectable selectable = selectables[i];
-//
-//     if (GuiButton(
-//             (Rectangle){
-//                 .x = pos.x, .y = pos.y, .width = btn.w, .height = btn.h},
-//             btn.text)) {
-//       // printf("Button pressed!\n");
-//     }
-//   }
-// }
 
 /* Set the entity velocity based on the direction to given point */
 static void sys_vel_toward_target_position(World *w, Archetype *a,
