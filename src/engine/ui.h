@@ -1,0 +1,42 @@
+#ifndef UI_H
+#define UI_H
+
+#include "raylib.h"
+#define RAYGUI_IMPLEMENTATION
+// #include "../engine/event_system/event_queue.h"
+#include "../game/entity.h"
+#include "../raygui.h"
+
+void ui_button_impl(Selectable selectable, Button btn_component, Position pos) {
+  Rectangle r = (Rectangle){.x = pos.x,
+                            .y = pos.y,
+                            .width = btn_component.w,
+                            .height = btn_component.h};
+  const char* txt = btn_component.text;
+
+  if (GuiButton(r, txt)) {
+    /* gameplay code can be done in the selection system pass to queue button press event*/
+    // printf("ASDF!!!!\n");
+  }
+}
+
+static void sys_ui_buttons(World *w, Archetype *a, void *userdata) {
+
+  (void)w;
+  (void)userdata;
+
+  Position *positions = archetype_column(a, Position_id);
+  Selectable *selectables = archetype_column(a, Selectable_id);
+  Button *buttons = archetype_column(a, Button_id);
+
+  for (uint32_t i = 0; i < a->count; i++) {
+    Button btn = buttons[i];
+    Position pos = positions[i];
+    Selectable selectable = selectables[i];
+
+    ui_button_impl(selectable, btn, pos);
+  }
+}
+
+#endif
+/* vim:set ts=3 sw=2 sts=2 et: */

@@ -16,8 +16,8 @@
 #include <math.h>
 #include <stddef.h>
 
-#define RAYGUI_IMPLEMENTATION
-#include "../raygui.h"
+// #define RAYGUI_IMPLEMENTATION
+// #include "../raygui.h"
 
 static Arena event_arena = {0};
 static Arena *event_arena_ptr = &event_arena;
@@ -78,6 +78,7 @@ typedef struct {
   float offset_y;
   int priority; /* Lower is higher priority (0-31)*/
   Entity entity;
+  SelectionType type;
 } Selectable;
 
 typedef struct {
@@ -198,9 +199,10 @@ void selectables_resolve(SelectableCtx *ctx) {
 
     Event *e = event_arena_alloc(sizeof(Event));
     e->type = EVENT_ENTITY_SELECTED;
-    e->data.entity_selected.entity = ctx->selections[i]->entity;
+    e->data.entity_selection_data.entity = ctx->selections[i]->entity;
+    e->data.entity_selection_data.type = ctx->selections[i]->type;
+    
     event_queue_push(ctx->event_queue, e);
-
     if (i + 1 < ctx->count &&
         ctx->selections[i]->priority < ctx->selections[i + 1]->priority) {
       break;
@@ -229,28 +231,28 @@ static void sys_render_selections(World *w, Archetype *a, void *userdata) {
   }
 }
 
-static void sys_ui_buttons(World *w, Archetype *a, void *userdata) {
-
-  (void)w;
-  (void)userdata;
-
-  Position *positions = archetype_column(a, Position_id);
-  Selectable *selectables = archetype_column(a, Selectable_id);
-  Button *buttons = archetype_column(a, Button_id);
-
-  for (uint32_t i = 0; i < a->count; i++) {
-    Button btn = buttons[i];
-    Position pos = positions[i];
-    Selectable selectable = selectables[i];
-
-    if (GuiButton(
-            (Rectangle){
-                .x = pos.x, .y = pos.y, .width = btn.w, .height = btn.h},
-            btn.text)) {
-      printf("Button pressed!\n");
-    }
-  }
-}
+// static void sys_ui_buttons(World *w, Archetype *a, void *userdata) {
+//
+//   (void)w;
+//   (void)userdata;
+//
+//   Position *positions = archetype_column(a, Position_id);
+//   Selectable *selectables = archetype_column(a, Selectable_id);
+//   Button *buttons = archetype_column(a, Button_id);
+//
+//   for (uint32_t i = 0; i < a->count; i++) {
+//     Button btn = buttons[i];
+//     Position pos = positions[i];
+//     Selectable selectable = selectables[i];
+//
+//     if (GuiButton(
+//             (Rectangle){
+//                 .x = pos.x, .y = pos.y, .width = btn.w, .height = btn.h},
+//             btn.text)) {
+//       // printf("Button pressed!\n");
+//     }
+//   }
+// }
 
 /* Set the entity velocity based on the direction to given point */
 static void sys_vel_toward_target_position(World *w, Archetype *a,
@@ -450,20 +452,18 @@ static Entity prefab_ui_button(World *world) {
 
   Position position = (Position){.x = 400, .y = 300};
 
-  Button btn_component = (Button){.w = width,
-                                  .h = height,
-                                  .text = "Use Potion or Something :P"};
+  Button btn_component =
+      (Button){.w = width, .h = height, .text = "Use Potion or Something :P"};
 
   Selectable selectable = (Selectable){
       .width = width,
       .height = height,
-      // .offset_x = -(width * 0.5f),
-      // .offset_y = -(height * 0.5f),
       .offset_x = 0,
       .offset_y = 0,
       .selected = true,
       .entity = btn_entity,
       .priority = 0,
+      .type = SELECTION_BUTTON,
   };
 
   world_add_component(world, btn_entity, Position_id, &position);
@@ -480,7 +480,7 @@ static Entity prefab_slime(World *world) {
   Velocity velocity = (Velocity){.dx = 0.0f, .dy = 0.0f};
   Speed speed = (Speed){.speed = 100.0f};
   // Health health = (Health){.hp = 20};
-  Collider collider = (Collider){.radius = 32};
+  Collider collider = (Collider){.radius = 16};
   BodyDebug body_debug =
       (BodyDebug){.color = DARKGREEN, .radius = collider.radius};
 
@@ -507,6 +507,7 @@ static Entity prefab_slime(World *world) {
       .selected = false,
       .entity = slime,
       .priority = 10,
+      .type = SELECTION_CHARACTER,
   };
 
   world_add_component(world, slime, Position_id, &position);

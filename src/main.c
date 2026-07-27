@@ -3,13 +3,15 @@
 #include "engine/ecs/archetypes.h"
 #include "engine/event_system/event_bus.h"
 #include "engine/event_system/event_queue.h"
+#include "engine/event_system/events.h"
+#include "engine/ui.h"
 #include "game/game.h"
 #include <string.h>
 
 #include "raylib.h"
 
 void on_target_reached(const Event *e, void *ctx);
-void on_selected(const Event *e, void *ctx);
+void on_entity_selected(const Event *e, void *ctx);
 
 int main(void) {
   Environment env = Environment_CreateDefault();
@@ -37,7 +39,7 @@ int main(void) {
   // typedef void (*EventCallback)(const Event *event, void* ctx);
   event_subscribe(&event_bus, EVENT_ENTITY_TARGET_REACHED, on_target_reached,
                   &world);
-  event_subscribe(&event_bus, EVENT_ENTITY_SELECTED, on_selected, &world);
+  event_subscribe(&event_bus, EVENT_ENTITY_SELECTED, on_entity_selected, &world);
 
   SelectableCtx selectable_ctx = selectable_ctx_init(&event_queue);
 
@@ -74,21 +76,32 @@ int main(void) {
 
     world_query(&world, (BIT(Position_id) | BIT(Selectable_id)),
                 sys_render_selections, NULL);
-
-    world_query(&world,
-                (BIT(Position_id) | BIT(Selectable_id) | BIT(Button_id)),
+    world_query(&world, (BIT(Position_id) | BIT(Selectable_id) | BIT(Button_id)),
                 sys_ui_buttons, NULL);
+
+    // world_query(&world,
+    //             (BIT(Position_id) | BIT(Selectable_id) | BIT(Button_id)),
+    //             sys_ui_buttons, NULL);
 
     EndDrawing();
   }
 
   event_unsubscribe(&event_bus, EVENT_ENTITY_TARGET_REACHED, on_target_reached);
-  event_unsubscribe(&event_bus, EVENT_ENTITY_SELECTED, on_selected);
+  event_unsubscribe(&event_bus, EVENT_ENTITY_SELECTED, on_entity_selected);
 }
 
-void on_selected(const Event *e, void *ctx) {
+void on_entity_selected(const Event *e, void *ctx) {
   (void)ctx;
-  printf("Selected Entity: %d\n", (e->data.entity_selected.entity.index));
+  // printf("Selected Entity: %d\n", (e->data.entity_selection_data.entity.index));
+
+  switch (e->data.entity_selection_data.type){
+    case SELECTION_BUTTON:
+      printf("Selected BUTTON!: %d\n", (e->data.entity_selection_data.entity.index));
+    break;
+    case SELECTION_CHARACTER:
+      printf("Selected CHARACTER!: %d\n", (e->data.entity_selection_data.entity.index));
+    break;
+  }
   /* TODO: Wire to slime status menu */
 }
 
