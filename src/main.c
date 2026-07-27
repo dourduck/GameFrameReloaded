@@ -35,11 +35,13 @@ int main(void) {
   }
 
   Entity button = prefab_ui_button(&world);
+  Entity panel = prefab_ui_stat_menu(&world);
 
   // typedef void (*EventCallback)(const Event *event, void* ctx);
   event_subscribe(&event_bus, EVENT_ENTITY_TARGET_REACHED, on_target_reached,
                   &world);
-  event_subscribe(&event_bus, EVENT_ENTITY_SELECTED, on_entity_selected, &world);
+  event_subscribe(&event_bus, EVENT_ENTITY_SELECTED, on_entity_selected,
+                  &world);
 
   SelectableCtx selectable_ctx = selectable_ctx_init(&event_queue);
 
@@ -76,7 +78,13 @@ int main(void) {
 
     world_query(&world, (BIT(Position_id) | BIT(Selectable_id)),
                 sys_render_selections, NULL);
-    world_query(&world, (BIT(Position_id) | BIT(Selectable_id) | BIT(Button_id)),
+
+    world_query(&world,
+                (BIT(Position_id) | BIT(Selectable_id) | BIT(Panel_id)),
+                sys_ui_panels, NULL);
+
+    world_query(&world,
+                (BIT(Position_id) | BIT(Selectable_id) | BIT(Button_id)),
                 sys_ui_buttons, NULL);
 
     EndDrawing();
@@ -89,12 +97,14 @@ int main(void) {
 void on_entity_selected(const Event *e, void *ctx) {
   (void)ctx;
 
-  switch (e->data.entity_selection_data.type){
-    case SELECTION_BUTTON:
-      printf("Selected BUTTON!: %d\n", (e->data.entity_selection_data.entity.index));
+  switch (e->data.entity_selection_data.type) {
+  case SELECTION_BUTTON:
+    printf("Selected BUTTON!: %d\n",
+           (e->data.entity_selection_data.entity.index));
     break;
-    case SELECTION_CHARACTER:
-      printf("Selected CHARACTER!: %d\n", (e->data.entity_selection_data.entity.index));
+  case SELECTION_CHARACTER:
+    printf("Selected CHARACTER!: %d\n",
+           (e->data.entity_selection_data.entity.index));
     break;
   }
   /* TODO: Wire to slime status menu */

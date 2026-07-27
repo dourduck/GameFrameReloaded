@@ -39,6 +39,7 @@ typedef enum {
 typedef enum {
   SELECTION_CHARACTER,
   SELECTION_BUTTON,
+  SELECTION_PANEL,
 } SelectionType;
 
 typedef struct {

@@ -85,6 +85,15 @@ typedef struct {
   const char *text;
 } Button;
 
+typedef struct {
+  Color color;
+  Color border_color;
+  int border_width;
+  Rectangle rect;
+  Vector2 origin;
+  float rotation;
+} Panel;
+
 DECLARE_COMPONENT_ID(Position);
 DECLARE_COMPONENT_ID(Velocity);
 DECLARE_COMPONENT_ID(Health);
@@ -95,6 +104,7 @@ DECLARE_COMPONENT_ID(BodyDebug);
 DECLARE_COMPONENT_ID(Collider);
 DECLARE_COMPONENT_ID(Selectable);
 DECLARE_COMPONENT_ID(Button);
+DECLARE_COMPONENT_ID(Panel);
 
 static void register_components() {
   REGISTER(Position);
@@ -107,6 +117,7 @@ static void register_components() {
   REGISTER(Collider);
   REGISTER(Selectable);
   REGISTER(Button);
+  REGISTER(Panel);
 }
 
 #define SELECTABLE_MAX 32
@@ -198,7 +209,7 @@ void selectables_resolve(SelectableCtx *ctx) {
     e->type = EVENT_ENTITY_SELECTED;
     e->data.entity_selection_data.entity = ctx->selections[i]->entity;
     e->data.entity_selection_data.type = ctx->selections[i]->type;
-    
+
     event_queue_push(ctx->event_queue, e);
     if (i + 1 < ctx->count &&
         ctx->selections[i]->priority < ctx->selections[i + 1]->priority) {
@@ -533,5 +544,62 @@ static Entity prefab_slime(World *world) {
 
   return slime;
 }
+
+static Entity prefab_ui_stat_menu(World *world) {
+  Entity menu = entity_create(world);
+
+  float width = 300;
+  float height = GetScreenHeight();
+  float pos_x = GetScreenWidth() - width;
+  float pos_y = 0;
+
+  Position position = (Position){.x=pos_x,.y=pos_y};
+
+  Selectable selectable = (Selectable){
+      .selected = false,
+      .width = width,
+      .height = height,
+      .offset_x = 0,
+      .offset_y = 0,
+      .priority = 1, /* Lower is higher priority (0-31)*/
+      .entity = menu,
+      .type = SELECTION_PANEL,
+  };
+
+
+  Panel panel = (Panel){
+      .color =
+          (Color){
+              .r = 60,
+              .g = 159,
+              .b = 156,
+              .a = 100,
+          },
+      .border_color =
+          (Color){
+              .r = 146,
+              .g = 126,
+              .b = 106,
+              .a = 100,
+          },
+      .border_width = 4,
+      .rect =
+          (Rectangle){
+              .x = pos_x,
+              .y = pos_y,
+              .width = width,
+              .height = height,
+          },
+      .origin = (Vector2){.x = 0, .y = 0},
+      .rotation = 0,
+  };
+
+  world_add_component(world, menu, Position_id, &position);
+  world_add_component(world, menu, Selectable_id, &selectable);
+  world_add_component(world, menu, Panel_id, &panel);
+
+  return menu;
+}
+
 #endif
 /* vim:set ts=3 sw=2 sts=2 et: */

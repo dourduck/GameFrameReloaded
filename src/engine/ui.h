@@ -12,17 +12,38 @@ void ui_button_impl(Selectable selectable, Button btn_component, Position pos) {
                             .y = pos.y,
                             .width = btn_component.w,
                             .height = btn_component.h};
-  const char* txt = btn_component.text;
+  const char *txt = btn_component.text;
 
   if (GuiButton(r, txt)) {
-    /* gameplay code can be done in the selection system pass to queue button press event*/
-    /* this could be a good spot for general effects when a button is pressed such as sound */
+    /* gameplay code can be done in the selection system pass to queue button
+     * press event*/
+    /* this could be a good spot for general effects when a button is pressed
+     * such as sound */
     /* WARNING: GAMEPLAY CODE SHOULD NOT GO HERE!*/
   }
 }
 
-static void sys_ui_buttons(World *w, Archetype *a, void *userdata) {
+static void sys_ui_panels(World *w, Archetype *a, void *userdata) {
+  (void)w;
+  (void)userdata;
 
+  Position *positions = archetype_column(a, Position_id);
+  Panel *panels = archetype_column(a, Panel_id);
+
+  for (uint32_t i = 0; i < a->count; i++) {
+    Color color = panels[i].color;
+    Color border_color = panels[i].border_color;
+    int border_width = panels[i].border_width;
+    Rectangle rect = panels[i].rect;
+    Vector2 origin = panels[i].origin;
+    float rot = panels[i].rotation;
+
+
+    GuiDrawRectangle(rect, border_width, border_color, color);
+  }
+}
+
+static void sys_ui_buttons(World *w, Archetype *a, void *userdata) {
   (void)w;
   (void)userdata;
 
