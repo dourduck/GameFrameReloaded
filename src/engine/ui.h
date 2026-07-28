@@ -1,10 +1,25 @@
 #ifndef UI_H
 #define UI_H
 
+#include "ecs/archetypes.h"
 #include "raylib.h"
+#include <stdio.h>
 #define RAYGUI_IMPLEMENTATION
 #include "../game/entity.h"
 #include "../raygui.h"
+
+void ui_init() {
+  int font_size = 36;
+  Font font =
+      LoadFontEx("./assets/font/OpenDyslexic-Regular.otf", font_size, NULL, 0);
+  GuiSetFont(font);
+  GuiSetStyle(DEFAULT, TEXT_SIZE, font_size);
+}
+
+void ui_text_impl(TextComponent text_component) {
+  GuiDrawText(text_component.content, text_component.bounds,
+              text_component.alignment, text_component.color);
+}
 
 void ui_button_impl(Selectable selectable, Button btn_component, Position pos) {
   Rectangle r = (Rectangle){.x = pos.x,
@@ -37,7 +52,6 @@ static void sys_ui_panels(World *w, Archetype *a, void *userdata) {
     Vector2 origin = panels[i].origin;
     float rot = panels[i].rotation;
 
-
     GuiDrawRectangle(rect, border_width, border_color, color);
   }
 }
@@ -56,6 +70,23 @@ static void sys_ui_buttons(World *w, Archetype *a, void *userdata) {
     Selectable selectable = selectables[i];
 
     ui_button_impl(selectable, btn, pos);
+  }
+}
+
+static void sys_ui_text(World *w, Archetype *a, void *userdata) {
+  (void)w;
+  (void)userdata;
+
+  Position *positions = archetype_column(a, Position_id);
+  // Selectable *selectables = archetype_column(a, Selectable_id);
+  TextComponent *text_components = archetype_column(a, TextComponent_id);
+
+  for (uint32_t i = 0; i < a->count; i++) {
+    Position pos = positions[i];
+    // Selectable selectable = selectables[i];
+    TextComponent text_component = text_components[i];
+
+    ui_text_impl(text_component);
   }
 }
 

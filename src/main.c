@@ -6,6 +6,7 @@
 #include "engine/event_system/events.h"
 #include "engine/ui.h"
 #include "game/game.h"
+#include <stdio.h>
 #include <string.h>
 
 #include "raylib.h"
@@ -17,6 +18,7 @@ int main(void) {
   Environment env = Environment_CreateDefault();
   Environment_InitWindow(&env);
 
+  ui_init();
   register_components();
 
   EventQueue event_queue = {0};
@@ -34,14 +36,15 @@ int main(void) {
     slimes[i] = prefab_slime(&world);
   }
 
-  Entity button = prefab_ui_button(&world);
-  Entity panel = prefab_ui_stat_menu(&world);
+  // Entity button = prefab_ui_button(&world);
+  StatMenuCtx statMenuCtx = prefab_ui_stat_menu(&world);
 
   // typedef void (*EventCallback)(const Event *event, void* ctx);
   event_subscribe(&event_bus, EVENT_ENTITY_TARGET_REACHED, on_target_reached,
                   &world);
+
   event_subscribe(&event_bus, EVENT_ENTITY_SELECTED, on_entity_selected,
-                  &world);
+                  &statMenuCtx);
 
   SelectableCtx selectable_ctx = selectable_ctx_init(&event_queue);
 
@@ -83,6 +86,9 @@ int main(void) {
                 (BIT(Position_id) | BIT(Selectable_id) | BIT(Button_id)),
                 sys_ui_buttons, NULL);
 
+    world_query(&world, (BIT(Position_id) | BIT(TextComponent_id)), sys_ui_text,
+                NULL);
+
     world_query(&world, (BIT(Position_id) | BIT(Selectable_id)),
                 sys_render_selections, NULL);
 
@@ -94,7 +100,7 @@ int main(void) {
 }
 
 void on_entity_selected(const Event *e, void *ctx) {
-  (void)ctx;
+  StatMenuCtx *stat_menu_ctx = ctx;
 
   switch (e->data.entity_selection_data.type) {
   case SELECTION_BUTTON:
@@ -104,9 +110,21 @@ void on_entity_selected(const Event *e, void *ctx) {
   case SELECTION_CHARACTER:
     printf("Selected CHARACTER!: %d\n",
            (e->data.entity_selection_data.entity.index));
+
+    CharacterData *character_data = world_get_component(
+        stat_menu_ctx->world, e->data.entity_selection_data.entity,
+        CharacterData_id);
+
+    printf("Character Data: \nHunger: %d\nThirst: %d\n", character_data->hunger,
+           character_data->thirst);
+
+    int char_written = sprintf(stat_menu_ctx->buffer, "Hunger: %d\nThirst: %d",
+                               character_data->hunger, character_data->thirst);
+
+    stat_menu_ctx->txt_hunger->content = stat_menu_ctx->buffer;
+
     break;
   }
-  /* TODO: Wire to slime status menu */
 }
 
 void on_target_reached(const Event *e, void *ctx) {

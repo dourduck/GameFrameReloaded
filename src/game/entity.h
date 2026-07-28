@@ -39,9 +39,9 @@ typedef struct {
   float dy;
 } Velocity;
 
-typedef struct {
-  int hp;
-} Health;
+// typedef struct {
+//   int hp;
+// } Health;
 
 typedef struct {
   int speed;
@@ -52,10 +52,11 @@ typedef struct {
   float radius;
 } BodyDebug;
 
-typedef struct {
-  int state;
-  int next_state_table[8][8]; // [transition_event][current_state] -> next_state
-} StateMachine;
+// typedef struct {
+//   int state;
+//   int next_state_table[8][8]; // [transition_event][current_state] ->
+//   next_state
+// } StateMachine;
 
 typedef struct {
   Entity entity;
@@ -86,6 +87,11 @@ typedef struct {
 } Button;
 
 typedef struct {
+  int hunger;
+  int thirst;
+} CharacterData;
+
+typedef struct {
   Color color;
   Color border_color;
   int border_width;
@@ -93,6 +99,13 @@ typedef struct {
   Vector2 origin;
   float rotation;
 } Panel;
+
+typedef struct {
+  char *content;
+  Rectangle bounds;
+  int alignment;
+  Color color;
+} TextComponent;
 
 DECLARE_COMPONENT_ID(Position);
 DECLARE_COMPONENT_ID(Velocity);
@@ -105,19 +118,23 @@ DECLARE_COMPONENT_ID(Collider);
 DECLARE_COMPONENT_ID(Selectable);
 DECLARE_COMPONENT_ID(Button);
 DECLARE_COMPONENT_ID(Panel);
+DECLARE_COMPONENT_ID(CharacterData);
+DECLARE_COMPONENT_ID(TextComponent);
 
 static void register_components() {
   REGISTER(Position);
   REGISTER(Velocity);
-  REGISTER(Health);
+  // REGISTER(Health);
   REGISTER(Speed);
-  REGISTER(StateMachine);
+  // REGISTER(StateMachine);
   REGISTER(Target);
   REGISTER(BodyDebug);
   REGISTER(Collider);
   REGISTER(Selectable);
   REGISTER(Button);
   REGISTER(Panel);
+  REGISTER(CharacterData);
+  REGISTER(TextComponent);
 }
 
 #define SELECTABLE_MAX 32
@@ -380,11 +397,11 @@ static Entity prefab_player(World *world) {
   /* component contents get copied */
   Position position = (Position){.x = 0, .y = 0};
   Velocity velocity = (Velocity){.dx = 100.0f, .dy = 50.0f};
-  Health health = (Health){.hp = 100};
+  // Health health = (Health){.hp = 100};
 
   world_add_component(world, player, Position_id, &position);
   world_add_component(world, player, Velocity_id, &velocity);
-  world_add_component(world, player, Health_id, &health);
+  // world_add_component(world, player, Health_id, &health);
 
   return player;
 }
@@ -429,13 +446,13 @@ static Entity prefab_target(World *world, float x, float y) {
   return target;
 }
 
-static Entity prefab_ui_button(World *world) {
+static Entity prefab_ui_button(World *world, Vector2 origin, int width,
+                               int height) {
   Entity btn_entity = entity_create(world);
 
-  int width = 200;
-  int height = 100;
-
-  Position position = (Position){.x = 400, .y = 300};
+  int pos_x = 8;
+  int pos_y = 8;
+  Position position = (Position){.x = origin.x + pos_x, .y = origin.y + pos_y};
 
   Button btn_component =
       (Button){.w = width, .h = height, .text = "Use Potion or Something :P"};
@@ -445,7 +462,7 @@ static Entity prefab_ui_button(World *world) {
       .height = height,
       .offset_x = 0,
       .offset_y = 0,
-      .selected = true,
+      .selected = false,
       .entity = btn_entity,
       .priority = 0,
       .type = SELECTION_BUTTON,
@@ -458,16 +475,40 @@ static Entity prefab_ui_button(World *world) {
   return btn_entity;
 }
 
+static Entity prefab_ui_text(World *world, Vector2 origin, int width,
+                             int height, char *content) {
+  Entity txt_entity = entity_create(world);
+
+  int pos_x = 8;
+  int pos_y = 8;
+  Position position = (Position){.x = origin.x + pos_x, .y = origin.y + pos_y};
+  Rectangle bounds = (Rectangle){
+      .x = position.x, .y = position.y, .width = width, .height = height};
+  int alignment = 0;
+  Color color = RAYWHITE;
+
+  TextComponent txt_component = (TextComponent){
+      .content = content, .bounds = bounds, .alignment = 0, .color = color};
+
+  world_add_component(world, txt_entity, Position_id, &position);
+  world_add_component(world, txt_entity, TextComponent_id, &txt_component);
+
+  return txt_entity;
+}
+
 static Entity prefab_slime(World *world) {
   Entity slime = entity_create(world);
 
   Position position = (Position){.x = 100, .y = 100};
   Velocity velocity = (Velocity){.dx = 0.0f, .dy = 0.0f};
   Speed speed = (Speed){.speed = 100.0f};
-  // Health health = (Health){.hp = 20};
   Collider collider = (Collider){.radius = 16};
   BodyDebug body_debug =
       (BodyDebug){.color = DARKGREEN, .radius = collider.radius};
+
+  int rand_hunger = GetRandomValue(1,100);
+  int rand_thirst = GetRandomValue(1,100);
+  CharacterData character_data = {.hunger = rand_hunger, .thirst = rand_thirst};
 
   float target_x = GetRandomValue(200, 600);
   float target_y = GetRandomValue(150, 450);
@@ -504,6 +545,7 @@ static Entity prefab_slime(World *world) {
 
   world_add_component(world, slime, Collider_id, &collider);
   world_add_component(world, slime, Selectable_id, &selectable);
+  world_add_component(world, slime, CharacterData_id, &character_data);
 
   // world_add_component(world, slime, Health_id, &health);
 
@@ -545,8 +587,16 @@ static Entity prefab_slime(World *world) {
   return slime;
 }
 
-static Entity prefab_ui_stat_menu(World *world) {
-  Entity menu = entity_create(world);
+typedef struct {
+  Entity root;
+  TextComponent* txt_hunger;
+  World *world;
+  char buffer[64];
+} StatMenuCtx;
+
+static StatMenuCtx prefab_ui_stat_menu(World *world) {
+  StatMenuCtx menu = {0};
+  Entity root = entity_create(world);
 
   float width = 300;
   float height = GetScreenHeight();
@@ -562,7 +612,7 @@ static Entity prefab_ui_stat_menu(World *world) {
       .offset_x = 0,
       .offset_y = 0,
       .priority = 1, /* Lower is higher priority (0-31)*/
-      .entity = menu,
+      .entity = root,
       .type = SELECTION_PANEL,
   };
 
@@ -593,9 +643,26 @@ static Entity prefab_ui_stat_menu(World *world) {
       .rotation = 0,
   };
 
-  world_add_component(world, menu, Position_id, &position);
-  world_add_component(world, menu, Selectable_id, &selectable);
-  world_add_component(world, menu, Panel_id, &panel);
+  world_add_component(world, root, Position_id, &position);
+  world_add_component(world, root, Selectable_id, &selectable);
+  world_add_component(world, root, Panel_id, &panel);
+
+  int elem_h = floor(width * 0.25f);
+  /*TODO: Figure out better way to approach padding/margins */
+  Entity btn = prefab_ui_button(
+      world, (Vector2){.x = pos_x, .y = GetScreenHeight() - elem_h - 16},
+      width - 16, elem_h);
+
+  // static Entity prefab_ui_text(World *world, Vector2 origin, int width, int
+  // height, const char* content) {
+  Entity txt_hunger = prefab_ui_text(
+      world,
+      (Vector2){.x = pos_x, .y = GetScreenHeight() - ((elem_h - 16) * 3)},
+      width - 16, elem_h, "");
+
+  menu.root = root;
+  menu.world = world;
+  menu.txt_hunger = world_get_component(world, txt_hunger, TextComponent_id);
 
   return menu;
 }
