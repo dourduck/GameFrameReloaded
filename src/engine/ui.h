@@ -10,10 +10,14 @@
 #include "../game/entity.h"
 
 void ui_init() {
+  GuiLoadStyle("./external/raysan5/styles/wisteria/style_wisteria.rgs");
+
   int font_size = 36;
   Font font =
       LoadFontEx("./assets/font/OpenDyslexic-Regular.otf", font_size, NULL, 0);
+
   GuiSetFont(font);
+
   GuiSetStyle(DEFAULT, TEXT_SIZE, font_size);
 }
 
