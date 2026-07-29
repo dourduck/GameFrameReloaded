@@ -19,3 +19,4 @@
 -Wall
 -Wextra
 -Werror
+-I./external/raysan5/include/

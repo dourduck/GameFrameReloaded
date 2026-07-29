@@ -2,11 +2,12 @@
 #define UI_H
 
 #include "ecs/archetypes.h"
-#include "raylib.h"
+#include "./../../external/raysan5/include/raylib.h"
 #include <stdio.h>
 #define RAYGUI_IMPLEMENTATION
+#include "./../../external/raysan5/include/raygui.h"
+
 #include "../game/entity.h"
-#include "../raygui.h"
 
 void ui_init() {
   int font_size = 36;

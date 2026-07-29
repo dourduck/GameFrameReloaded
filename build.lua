@@ -1,20 +1,75 @@
 #!/usr/bin/env lua
 
--- main.c
-os.execute("echo '[***BUILDING MAIN***]'")
-os.execute("gcc -c ./src/main.c -I./include/ -L./lib/ -lraylib -Wl,-rpath,$(pwd)/lib/ -lm -lpthread -ldl -lrt -lX11")
+local CompileCommand = {}
+CompileCommand.__index = CompileCommand
 
-os.execute("echo '[***BUILDING EVENT LIB***]'")
-os.execute(
-	"gcc -c ./src/engine/event_system/event_bus.c -I./include/ -L./lib/ -lraylib -Wl,-rpath,$(pwd)/lib/ -lm -lpthread -ldl -lrt -lX11")
-os.execute(
-	"gcc -c ./src/engine/event_system/event_queue.c -I./include/ -L./lib/ -lraylib -Wl,-rpath,$(pwd)/lib/ -lm -lpthread -ldl -lrt -lX11")
+function CompileCommand:new()
+	local command_table = {
+		CC = "gcc",
+		CFLAGS = "-c",
+		SOURCE = "./main.c",
+		INCLUDE = "",
+		LIB = "",
+		ARGS = "",
+		DEBUG = true,
+	}
+	return setmetatable(command_table, CompileCommand)
+end
 
--- linking
-os.execute("echo '[***LINKING***]'")
-os.execute(
-	"gcc -o game main.o event_bus.o event_queue.o -I./include/ -L./lib/ -lraylib -Wl,-rpath,$(pwd)/lib/ -lm -lpthread -ldl -lrt -lX11")
+function CompileCommand:tostring()
+	local commands = {
+		self.CC,
+		self.CFLAGS,
+		self.SOURCE,
+		self.INCLUDE,
+		self.LIB,
+		self.ARGS,
+	}
 
--- cleanup object files
+	return table.concat(commands, " ")
+end
+
+function CompileCommand:print()
+	print(self:tostring())
+end
+
+function CompileCommand:exec()
+	if self.DEBUG then
+		self:print()
+	else
+		os.execute(self:tostring())
+	end
+end
+
+local cc_command = CompileCommand:new()
+
+cc_command.CC = "gcc"
+cc_command.INCLUDE = "-I./external/raysan5/include/"
+cc_command.LIB = "-L./external/raysan5/lib/"
+cc_command.ARGS = "-lraylib -Wl,-rpath,$(pwd)/external/raysan5/lib/ -lm -lpthread -ldl -lrt -lX11"
+cc_command.DEBUG = false
+
+print("[***BUILDING MAIN***]")
+cc_command.SOURCE = "./src/main.c"
+cc_command.CFLAGS = "-c"
+cc_command:exec()
+
+-- *** ---
+
+print("[***BUILDING EVENT SYSTEM***]")
+cc_command.SOURCE = "./src/engine/event_system/event_bus.c"
+cc_command:exec()
+
+cc_command.SOURCE = "./src/engine/event_system/event_queue.c"
+cc_command:exec()
+
+-- *** ---
+
+print("[***LINKING***]")
+cc_command.CFLAGS = "-o game"
+cc_command.SOURCE = "main.o event_bus.o event_queue.o"
+cc_command:exec()
+
+-- -- cleanup object files
 os.execute("mkdir -p ./build/")
 os.execute("mv *.o ./build/")

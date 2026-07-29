@@ -4,17 +4,19 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
-#define ARENA_IMPLEMENTATION
-#include "./../engine/arena/arena.h"
-#include "./../engine/ecs/archetypes.h"
-#include "./../engine/event_system/event_queue.h"
-#include "./../engine/event_system/events.h"
-
-#include "raylib.h"
 #include <assert.h>
 #include <float.h>
 #include <math.h>
 #include <stddef.h>
+
+#include "./../../external/raysan5/include/raylib.h"
+#define ARENA_IMPLEMENTATION
+#include "./../../external/tsoding/arena.h"
+
+#include "./../engine/ecs/archetypes.h"
+#include "./../engine/event_system/event_queue.h"
+#include "./../engine/event_system/events.h"
+
 
 static Arena event_arena = {0};
 static Arena *event_arena_ptr = &event_arena;
