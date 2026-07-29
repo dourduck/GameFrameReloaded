@@ -1,19 +1,15 @@
 #ifndef ENTITY_H
 #define ENTITY_H
 
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <assert.h>
-#include <float.h>
 #include <math.h>
-#include <stddef.h>
 
 #include "./../../external/raysan5/include/raylib.h"
+
 #define ARENA_IMPLEMENTATION
 #include "./../../external/tsoding/arena.h"
 
 #include "./../engine/ecs/archetypes.h"
+
 #include "./../engine/event_system/event_queue.h"
 #include "./../engine/event_system/events.h"
 
@@ -41,10 +37,6 @@ typedef struct {
   float dy;
 } Velocity;
 
-// typedef struct {
-//   int hp;
-// } Health;
-
 typedef struct {
   int speed;
 } Speed;
@@ -53,12 +45,6 @@ typedef struct {
   Color color;
   float radius;
 } BodyDebug;
-
-// typedef struct {
-//   int state;
-//   int next_state_table[8][8]; // [transition_event][current_state] ->
-//   next_state
-// } StateMachine;
 
 typedef struct {
   Entity entity;
@@ -69,6 +55,12 @@ typedef struct {
 typedef struct {
   float radius;
 } Collider;
+
+typedef enum {
+  SELECTION_CHARACTER,
+  SELECTION_BUTTON,
+  SELECTION_PANEL,
+} SelectionType;
 
 typedef struct {
   bool selected;
@@ -126,9 +118,7 @@ DECLARE_COMPONENT_ID(TextComponent);
 static void register_components() {
   REGISTER(Position);
   REGISTER(Velocity);
-  // REGISTER(Health);
   REGISTER(Speed);
-  // REGISTER(StateMachine);
   REGISTER(Target);
   REGISTER(BodyDebug);
   REGISTER(Collider);
@@ -227,7 +217,7 @@ void selectables_resolve(SelectableCtx *ctx) {
     Event *e = event_arena_alloc(sizeof(Event));
     e->type = EVENT_ENTITY_SELECTED;
     e->data.entity_selection_data.entity = ctx->selections[i]->entity;
-    e->data.entity_selection_data.type = ctx->selections[i]->type;
+    e->data.entity_selection_data.selection_type = ctx->selections[i]->type;
 
     event_queue_push(ctx->event_queue, e);
     if (i + 1 < ctx->count &&
@@ -393,49 +383,6 @@ static void sys_render(World *w, Archetype *a, void *userdata) {
   }
 }
 
-static Entity prefab_player(World *world) {
-  Entity player = entity_create(world);
-
-  /* component contents get copied */
-  Position position = (Position){.x = 0, .y = 0};
-  Velocity velocity = (Velocity){.dx = 100.0f, .dy = 50.0f};
-  // Health health = (Health){.hp = 100};
-
-  world_add_component(world, player, Position_id, &position);
-  world_add_component(world, player, Velocity_id, &velocity);
-  // world_add_component(world, player, Health_id, &health);
-
-  return player;
-}
-
-typedef enum {
-  // FSM_S_WANDERING,
-  F_S_JOY,
-  F_S_SLEEP,
-  F_S_HUNT,
-  F_S_EAT,
-
-  F_S_PLAY,
-  F_S_WALLOW,
-  F_S_FIGHTING,
-  F_S_FLEE,
-
-} F_State;
-
-typedef enum {
-  F_E_FOOD,
-  F_E_FUN,
-  F_E_PAIN,
-  F_E_ANGER,
-
-  F_E_BORED,
-  F_E_HUNGRY,
-  F_E_TIRED,
-  F_E_ATE,
-
-  F_E_DEATH,
-} F_Event;
-
 static Entity prefab_target(World *world, float x, float y) {
   Entity target = entity_create(world);
 
@@ -548,43 +495,6 @@ static Entity prefab_slime(World *world) {
   world_add_component(world, slime, Collider_id, &collider);
   world_add_component(world, slime, Selectable_id, &selectable);
   world_add_component(world, slime, CharacterData_id, &character_data);
-
-  // world_add_component(world, slime, Health_id, &health);
-
-  // int state_table[8][8] = {
-  //     /* happy | sleeping | hunting | eating | playing | wallowing | fighting
-  //     |
-  //        fleeing */
-  //     {F_S_JOY, F_S_SLEEP, F_S_EAT, F_S_EAT, F_S_PLAY, F_S_EAT, F_S_FIGHTING,
-  //      F_S_FLEE}, /* found food */
-  //     {F_S_JOY, F_S_SLEEP, F_S_HUNT, F_S_EAT, F_S_PLAY, F_S_JOY,
-  //     F_S_FIGHTING,
-  //      F_S_FLEE}, /* having fun */
-  //     {F_S_FLEE, F_S_FLEE, F_S_FIGHTING, F_S_FIGHTING, F_S_FLEE, F_S_FLEE,
-  //      F_S_FLEE, F_S_FLEE}, /* injured */
-  //     {F_S_JOY, F_S_SLEEP, F_S_HUNT, F_S_EAT, F_S_PLAY, F_S_WALLOW,
-  //      F_S_FIGHTING, F_S_FLEE}, /* angered */
-  //     {F_S_WALLOW, F_S_SLEEP, F_S_HUNT, F_S_EAT, F_S_PLAY, F_S_WALLOW,
-  //      F_S_FIGHTING, F_S_FLEE}, /* bored */
-  //     {F_S_HUNT, F_S_SLEEP, F_S_HUNT, F_S_EAT, F_S_HUNT, F_S_HUNT,
-  //     F_S_FIGHTING,
-  //      F_S_FLEE}, /* hungry */
-  //     {F_S_SLEEP, F_S_SLEEP, F_S_HUNT, F_S_EAT, F_S_SLEEP, F_S_SLEEP,
-  //      F_S_FIGHTING, F_S_FLEE}, /* tired */
-  //     {F_S_JOY, F_S_SLEEP, F_S_JOY, F_S_JOY, F_S_PLAY, F_S_WALLOW,
-  //     F_S_FIGHTING,
-  //      F_S_FLEE}, /* satiated */
-  // };
-  //
-  // StateMachine state_machine = {0};
-
-  // for (int i = 0; i < 8; i++) {
-  //   for (int j = 0; j < 8; j++) {
-  //     state_machine.next_state_table[i][j] = state_table[i][j];
-  //   }
-  // }
-
-  // world_add_component(world, slime, StateMachine_id, &state_machine);
 
   return slime;
 }

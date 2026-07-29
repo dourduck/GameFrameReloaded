@@ -1,15 +1,7 @@
 #include <stdio.h>
-// #include <string.h>
 
-#include "./engine/ecs/archetypes.h"
-#include "./engine/event_system/event_bus.h"
-#include "./engine/event_system/event_queue.h"
-#include "./engine/event_system/events.h"
 #include "./engine/ui/ui.h"
-#include "./game/entity.h"
 #include "./platform/window.h"
-
-#include "raylib.h"
 
 void on_target_reached(const Event *e, void *ctx);
 void on_entity_selected(const Event *e, void *ctx);
@@ -102,7 +94,7 @@ int main(void) {
 void on_entity_selected(const Event *e, void *ctx) {
   StatMenuCtx *stat_menu_ctx = ctx;
 
-  switch (e->data.entity_selection_data.type) {
+  switch (e->data.entity_selection_data.selection_type) {
   case SELECTION_BUTTON:
     printf("Selected BUTTON!: %d\n",
            (e->data.entity_selection_data.entity.index));
