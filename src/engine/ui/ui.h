@@ -1,13 +1,12 @@
 #ifndef UI_H
 #define UI_H
 
-#include "ecs/archetypes.h"
-#include "./../../external/raysan5/include/raylib.h"
-#include <stdio.h>
+#include "./../ecs/archetypes.h"
+#include "./../../../external/raysan5/include/raylib.h"
 #define RAYGUI_IMPLEMENTATION
-#include "./../../external/raysan5/include/raygui.h"
+#include "./../../../external/raysan5/include/raygui.h"
 
-#include "../game/entity.h"
+#include "./../../game/entity.h"
 
 void ui_init() {
   GuiLoadStyle("./external/raysan5/styles/wisteria/style_wisteria.rgs");

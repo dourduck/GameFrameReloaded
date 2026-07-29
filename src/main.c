@@ -5,7 +5,7 @@
 #include "./engine/event_system/event_bus.h"
 #include "./engine/event_system/event_queue.h"
 #include "./engine/event_system/events.h"
-#include "./engine/ui.h"
+#include "./engine/ui/ui.h"
 #include "./game/entity.h"
 #include "./platform/window.h"
 
