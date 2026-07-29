@@ -2,9 +2,7 @@
 #define EVENTS_H
 
 #include "../ecs/archetypes.h"
-#include <stdint.h>
-
-typedef uint32_t u32;
+#include "../../core/types.h"
 
 typedef enum {
   EVENT_NONE = 0,
