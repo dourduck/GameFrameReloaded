@@ -10,6 +10,8 @@ typedef enum {
   EVENT_ENTITY_SPAWNED,
   EVENT_ENTITY_TARGET_REACHED,
   EVENT_ENTITY_SELECTED,
+  EVENT_CHARACTER_SELECTED,
+  EVENT_NO_SELECTION,
 
   /* (-*-) */
   EVENT_COUNT
@@ -39,8 +41,7 @@ typedef struct {
 
       union {
         struct {
-          float pos_x;
-          float pos_y;
+          void *character_component;
         } character_data;
 
         struct {

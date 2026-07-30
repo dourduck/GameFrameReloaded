@@ -6,7 +6,7 @@
 #define RAYGUI_IMPLEMENTATION
 #include "./../../../external/raysan5/include/raygui.h"
 
-#include "./../../game/entity.h"
+#include "./../../game/entity/components.h"
 
 void ui_init() {
   GuiLoadStyle("./external/raysan5/styles/wisteria/style_wisteria.rgs");
