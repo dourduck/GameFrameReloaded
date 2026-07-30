@@ -8,7 +8,7 @@
 
 #include "./../../game/entity/components.h"
 
-void ui_init() {
+static void ui_init() {
   GuiLoadStyle("./external/raysan5/styles/wisteria/style_wisteria.rgs");
 
   int font_size = 36;
@@ -20,12 +20,12 @@ void ui_init() {
   GuiSetStyle(DEFAULT, TEXT_SIZE, font_size);
 }
 
-void ui_text_impl(TextComponent text_component) {
+static void ui_text_impl(TextComponent text_component) {
   GuiDrawText(text_component.content, text_component.bounds,
               text_component.alignment, text_component.color);
 }
 
-void ui_button_impl(Selectable selectable, Button btn_component, Position pos) {
+static void ui_button_impl(Selectable selectable, Button btn_component, Position pos) {
   Rectangle r = (Rectangle){.x = pos.x,
                             .y = pos.y,
                             .width = btn_component.w,
@@ -82,12 +82,10 @@ static void sys_ui_text(World *w, Archetype *a, void *userdata) {
   (void)userdata;
 
   Position *positions = archetype_column(a, Position_id);
-  // Selectable *selectables = archetype_column(a, Selectable_id);
   TextComponent *text_components = archetype_column(a, TextComponent_id);
 
   for (uint32_t i = 0; i < a->count; i++) {
     Position pos = positions[i];
-    // Selectable selectable = selectables[i];
     TextComponent text_component = text_components[i];
 
     ui_text_impl(text_component);

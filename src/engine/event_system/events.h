@@ -38,20 +38,7 @@ typedef struct {
     struct{
       int selection_type;
       Entity entity;
-
-      union {
-        struct {
-          void *character_component;
-        } character_data;
-
-        struct {
-          void (*callback)(void *ctx);
-        } button_data;
-
-        struct {
-        } panel_data;
-      };
-    } entity_selection_data;
+    } entity_selection;
 
   } data;
 } Event;

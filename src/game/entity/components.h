@@ -25,8 +25,8 @@ typedef struct {
 
 typedef struct {
   Entity entity;
-  bool reached;
   float reached_threshold;
+  bool reached;
 } Target;
 
 typedef struct {
@@ -125,7 +125,7 @@ typedef struct {
   int count;
 } SelectableCtx;
 
-SelectableCtx selectable_ctx_init(EventQueue *q) {
+static SelectableCtx selectable_ctx_init(EventQueue *q) {
   SelectableCtx ctx = (SelectableCtx){
       .event_queue = q,
       .count = 0,

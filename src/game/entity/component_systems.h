@@ -2,11 +2,13 @@
 #define COMPONENT_SYSTEMS_H
 
 #include <math.h>
+#include <stdbool.h>
+#include <stdio.h>
 
 #include "./../../../external/raysan5/include/raylib.h"
 #include "./../../engine/ecs/archetypes.h"
 
-#include "./../arena.h"
+#include "./../../engine/event_system/event_factories.h"
 #include "./components.h"
 
 static void sys_character_stats(World *w, Archetype *a, void *userdata) {
@@ -43,12 +45,7 @@ static void sys_character_stats(World *w, Archetype *a, void *userdata) {
     }
 
     if (selectables[i].selected && timer_reset) {
-      Event e = {0};
-      e.type = EVENT_CHARACTER_SELECTED;
-      e.data.entity_selection_data.selection_type = SELECTION_CHARACTER;
-      e.data.entity_selection_data.entity = a->entities[i];
-      e.data.entity_selection_data.character_data.character_component =
-          &character_data[i];
+      Event e = event_create_character_selected(a->entities[i]);
       event_queue_push(character_data_ctx->event_queue, &e);
     }
   }
@@ -91,7 +88,7 @@ static void sys_selectables(World *w, Archetype *a, void *userdata) {
   }
 }
 
-void selectables_resolve(World *world, SelectableCtx *ctx) {
+static void selectables_resolve(World *world, SelectableCtx *ctx) {
   if (!ctx->count) {
     return;
   }
@@ -122,28 +119,25 @@ void selectables_resolve(World *world, SelectableCtx *ctx) {
   // }
   // printf("\n");
 
+  (void)world;
+
   for (int i = 0; i < ctx->count; i++) {
     ctx->selections[i]->selected = true;
+    Entity entity = ctx->selections[i]->entity;
+    SelectionType type = ctx->selections[i]->type;
 
-    Event *e = event_arena_alloc(sizeof(Event));
-    e->type = EVENT_ENTITY_SELECTED;
-    e->data.entity_selection_data.entity = ctx->selections[i]->entity;
-    e->data.entity_selection_data.selection_type = ctx->selections[i]->type;
+    Event e = {0};
 
-    switch (e->data.entity_selection_data.selection_type) {
-    case SELECTION_BUTTON:
-      break;
+    switch (type) {
     case SELECTION_CHARACTER:
-      e->type = EVENT_CHARACTER_SELECTED;
-      e->data.entity_selection_data.character_data.character_component =
-          world_get_component(world, e->data.entity_selection_data.entity,
-                              CharacterData_id);
+      e = event_create_character_selected(entity);
       break;
-    case SELECTION_PANEL:
+    default:
+      e = event_create_entity_selected(entity, type);
       break;
     }
 
-    event_queue_push(ctx->event_queue, e);
+    event_queue_push(ctx->event_queue, &e);
     if (i + 1 < ctx->count &&
         ctx->selections[i]->priority < ctx->selections[i + 1]->priority) {
       break;
@@ -184,8 +178,23 @@ static void sys_vel_toward_target_position(World *w, Archetype *a,
   Speed *speeds = archetype_column(a, Speed_id);
 
   for (uint32_t i = 0; i < a->count; i++) {
+
     if (targets[i].reached) {
-      continue;
+      velocities[i].dx = 0;
+      velocities[i].dy = 0;
+
+      Position *target_pos = world_get_component(w, targets[i].entity, Position_id);
+
+      float rand_x = target_pos->x + (GetRandomValue(0, 1) ? -25 : 25);
+      float rand_y = target_pos->y + (GetRandomValue(0, 1) ? -25 : 25);
+
+      rand_x = rand_x > 800 ? (rand_x - 50) : rand_x < 0 ? (rand_x + 50) : rand_x;
+      rand_y = rand_y > 600 ? (rand_y - 50) : rand_y < 0 ? (rand_y + 50) : rand_y;
+
+      target_pos->x = rand_x;
+      target_pos->y = rand_y;
+
+      targets[i].reached = false;
     }
 
     /* calc direction to target */
@@ -199,20 +208,14 @@ static void sys_vel_toward_target_position(World *w, Archetype *a,
     float dyy = dy * dy;
     float mag = sqrt(dxx + dyy);
 
-    if (mag <= targets[i].reached_threshold && !targets[i].reached) {
-
+    if (mag <= targets[i].reached_threshold) {
       Entity current_entity = a->entities[i];
       Entity target_entity = targets[i].entity;
 
-      Event *e = event_arena_alloc(sizeof(Event));
-      e->type = EVENT_ENTITY_TARGET_REACHED;
-      e->data.entity_target_reached.current_entity = current_entity;
-      e->data.entity_target_reached.target_entity = target_entity;
-      event_queue_push(event_queue, e);
+      Event e = event_create_target_reached(current_entity, target_entity);
+      event_queue_push(event_queue, &e);
 
       targets[i].reached = true;
-      velocities[i].dx = 0;
-      velocities[i].dy = 0;
       continue;
     }
 

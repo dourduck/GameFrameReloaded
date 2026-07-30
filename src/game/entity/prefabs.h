@@ -99,7 +99,6 @@ static Entity prefab_slime(World *world) {
 
   Target target = (Target){
       .entity = target_entity,
-      .reached = false,
       .reached_threshold = 10.0f,
   };
 
