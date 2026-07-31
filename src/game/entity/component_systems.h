@@ -162,7 +162,7 @@ static void sys_render_selections(World *w, Archetype *a, void *userdata) {
           .width = selectables[i].width,
           .height = selectables[i].height,
       };
-      DrawRectangleLinesEx(r, 4, GREEN);
+      DrawRectangleLinesEx(r, 2, YELLOW);
     }
   }
 }

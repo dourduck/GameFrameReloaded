@@ -1,13 +1,9 @@
-// #include <stdio.h>
-
 #include "./engine/ui/ui.h"
-#include "./game/entity/entity.h" // IWYU pragma: keep
-#include "./platform/window.h"
-#include "engine/event_system/event_queue.h"
-// #include "engine/event_system/events.h"
-#include "game/entity/components.h"
-
+#include "./game/entity/component_systems.h"
 #include "./game/event_handlers.h"
+#include "./platform/window.h"
+#include "raylib.h"
+#include <stdio.h>
 
 int main(void) {
   Environment env = Environment_CreateDefault();
@@ -24,7 +20,7 @@ int main(void) {
   World world = {0};
   world_init(&world);
 
-  #define SLIME_COUNT 32
+#define SLIME_COUNT 128
   Entity slimes[SLIME_COUNT] = {0};
 
   for (int i = 0; i < SLIME_COUNT; i++) {
@@ -34,16 +30,22 @@ int main(void) {
   StatMenuCtx stat_menu_ctx = prefab_ui_stat_menu(&world);
   SelectableCtx selectable_ctx = selectable_ctx_init(&event_queue);
 
-
   CharacterDataCtx character_data_ctx = {0};
   character_data_ctx.event_queue = &event_queue;
 
   GameHandlerCtx game_handler_ctx = {
-    .world = &world,
-    .stat_menu_ctx = &stat_menu_ctx,
+      .world = &world,
+      .stat_menu_ctx = &stat_menu_ctx,
   };
 
   game_handler_register(&event_bus, &game_handler_ctx);
+
+  /* vvv [ [DEBUG] ] vvv */
+
+  Font font = LoadFont("./assets/font/OpenDyslexic-Regular.otf");
+  Color debug_text_color = (Color){.r = 200, .g = 200, .b = 32, .a = 255};
+
+  /* ^^^ [ [DEBUG] ] ^^^ */
 
   while (!WindowShouldClose()) {
     float dt = GetFrameTime();
@@ -63,7 +65,7 @@ int main(void) {
     world_query(&world, (BIT(Position_id) | BIT(Velocity_id)), sys_movement,
                 &dt);
 
-    world_query(&world, (BIT(CharacterData_id)) , sys_character_stats,
+    world_query(&world, (BIT(CharacterData_id)), sys_character_stats,
                 &character_data_ctx);
 
     /* selection collection */
@@ -76,7 +78,8 @@ int main(void) {
     event_queue_flush(&event_queue);
 
     BeginDrawing();
-    ClearBackground(GRAY);
+    ClearBackground(DARKPURPLE);
+
     world_query(&world, (BIT(Position_id) | BIT(BodyDebug_id)), sys_render,
                 NULL);
 
@@ -92,6 +95,10 @@ int main(void) {
 
     world_query(&world, (BIT(Position_id) | BIT(Selectable_id)),
                 sys_render_selections, NULL);
+
+    char buf[16] = "\0";
+    snprintf(buf, sizeof(buf), "FPS: %d", GetFPS());
+    DrawTextEx(font, buf, (Vector2){10, 10}, 36, 0, debug_text_color);
 
     EndDrawing();
   }

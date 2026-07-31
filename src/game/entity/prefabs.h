@@ -1,18 +1,24 @@
 #ifndef PREFABS_H
 #define PREFABS_H
 
-#include <math.h>
 #include "./../../engine/ecs/archetypes.h"
 #include "./components.h"
+#include "raylib.h"
+#include <math.h>
+
+#define DEBUG 1
 
 static Entity prefab_target(World *world, float x, float y) {
   Entity target = entity_create(world);
 
   Position position = (Position){.x = x, .y = y};
-  BodyDebug body_debug = (BodyDebug){.color = YELLOW, .radius = 8};
 
   world_add_component(world, target, Position_id, &position);
-  world_add_component(world, target, BodyDebug_id, &body_debug);
+
+  if (DEBUG) {
+    BodyDebug body_debug = (BodyDebug){.color = LIGHTGRAY, .radius = 2};
+    world_add_component(world, target, BodyDebug_id, &body_debug);
+  }
 
   return target;
 }
@@ -73,20 +79,21 @@ static Entity prefab_slime(World *world) {
   Position position = (Position){.x = 100, .y = 100};
   Velocity velocity = (Velocity){.dx = 0.0f, .dy = 0.0f};
   Speed speed = (Speed){.speed = 100.0f};
-  Collider collider = (Collider){.radius = 16};
+  Collider collider = (Collider){.radius = 8};
   BodyDebug body_debug =
-      (BodyDebug){.color = DARKGREEN, .radius = collider.radius};
+      (BodyDebug){.color = (Color){.r = 32, .g = 200, .b = 32, .a = 255},
+                  .radius = collider.radius};
 
-  int rand_hunger = GetRandomValue(1,100);
-  int rand_thirst = GetRandomValue(1,100);
-  CharacterData character_data =
-    {.hunger = 100.0,
+  int rand_hunger = GetRandomValue(1, 100);
+  int rand_thirst = GetRandomValue(1, 100);
+  CharacterData character_data = {
+      .hunger = 100.0,
       .thirst = 100.0,
       .hunger_rate = 0.5f,
       .thirst_rate = 0.5f,
       .hunger_timer = 0.0f,
       .thirst_timer = 0.0f,
-    };
+  };
 
   float target_x = GetRandomValue(200, 600);
   float target_y = GetRandomValue(150, 450);
@@ -129,7 +136,7 @@ static Entity prefab_slime(World *world) {
 
 typedef struct {
   Entity root;
-  TextComponent* txt_hunger;
+  TextComponent *txt_hunger;
   World *world;
   char buffer[64];
 } StatMenuCtx;
@@ -206,5 +213,8 @@ static StatMenuCtx prefab_ui_stat_menu(World *world) {
 
   return menu;
 }
+
+#undef DEBUG
+
 #endif
 /* vim:set ts=3 sw=2 sts=2 et: */

@@ -19,7 +19,7 @@ static Environment Environment_CreateDefault() {
       .width = 800,
       .height = 600,
       .title = "Game",
-      .target_fps = 60,
+      .target_fps = 120,
       .exit_key = KEY_Q,
       .flags = 0,
   };
