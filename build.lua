@@ -79,3 +79,5 @@ cc_command:exec()
 -- -- cleanup object files
 os.execute("mkdir -p ./build/")
 os.execute("mv *.o ./build/")
+os.execute("mv game ./build/")
+os.execute("./build/game")

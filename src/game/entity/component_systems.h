@@ -45,6 +45,7 @@ static void sys_character_stats(World *w, Archetype *a, void *userdata) {
     }
 
     if (selectables[i].selected && timer_reset) {
+      printf("System Hunger: %.0f\n", character_data[i].hunger);
       Event e = event_create_character_selected(a->entities[i]);
       event_queue_push(character_data_ctx->event_queue, &e);
     }

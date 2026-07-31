@@ -71,6 +71,8 @@ static void on_character_selected(const Event *e, void *ctx) {
     return;
   }
 
+  printf("Event Hunger: %.0f\n", character_data->hunger);
+
   int char_written =
       snprintf(stat_menu_ctx->buffer, sizeof(stat_menu_ctx->buffer),
                "Hunger: %.0f\nThirst: %.0f", character_data->hunger,
