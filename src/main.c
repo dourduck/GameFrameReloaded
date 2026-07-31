@@ -24,7 +24,7 @@ int main(void) {
   World world = {0};
   world_init(&world);
 
-  #define SLIME_COUNT 1
+  #define SLIME_COUNT 32
   Entity slimes[SLIME_COUNT] = {0};
 
   for (int i = 0; i < SLIME_COUNT; i++) {

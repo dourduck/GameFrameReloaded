@@ -65,15 +65,9 @@ cc_command:exec()
 
 -- *** ---
 
-print("[***BUILDING EVENT HANDLERS***]")
-cc_command.SOURCE = "./src/game/event_handlers.c"
-cc_command:exec()
-
--- *** ---
-
 print("[***LINKING***]")
 cc_command.CFLAGS = "-o game"
-cc_command.SOURCE = "main.o event_bus.o event_queue.o event_handlers.o"
+cc_command.SOURCE = "main.o event_bus.o event_queue.o"
 cc_command:exec()
 
 -- -- cleanup object files

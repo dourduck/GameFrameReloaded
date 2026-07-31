@@ -3,7 +3,7 @@
 
 #include <math.h>
 #include <stdbool.h>
-#include <stdio.h>
+// #include <stdio.h>
 
 #include "./../../../external/raysan5/include/raylib.h"
 #include "./../../engine/ecs/archetypes.h"
@@ -45,7 +45,7 @@ static void sys_character_stats(World *w, Archetype *a, void *userdata) {
     }
 
     if (selectables[i].selected && timer_reset) {
-      printf("System Hunger: %.0f\n", character_data[i].hunger);
+      // printf("System Hunger: %.0f\n", character_data[i].hunger);
       Event e = event_create_character_selected(a->entities[i]);
       event_queue_push(character_data_ctx->event_queue, &e);
     }
@@ -180,22 +180,8 @@ static void sys_vel_toward_target_position(World *w, Archetype *a,
 
   for (uint32_t i = 0; i < a->count; i++) {
 
-    if (targets[i].reached) {
-      velocities[i].dx = 0;
-      velocities[i].dy = 0;
-
-      Position *target_pos = world_get_component(w, targets[i].entity, Position_id);
-
-      float rand_x = target_pos->x + (GetRandomValue(0, 1) ? -25 : 25);
-      float rand_y = target_pos->y + (GetRandomValue(0, 1) ? -25 : 25);
-
-      rand_x = rand_x > 800 ? (rand_x - 50) : rand_x < 0 ? (rand_x + 50) : rand_x;
-      rand_y = rand_y > 600 ? (rand_y - 50) : rand_y < 0 ? (rand_y + 50) : rand_y;
-
-      target_pos->x = rand_x;
-      target_pos->y = rand_y;
-
-      targets[i].reached = false;
+    if (targets[i].reached){
+      continue;
     }
 
     /* calc direction to target */
