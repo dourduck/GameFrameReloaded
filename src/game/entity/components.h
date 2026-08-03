@@ -33,6 +33,11 @@ typedef struct {
   float radius;
 } Collider;
 
+typedef struct {
+  float radius;
+  Color color;
+} Cursor;
+
 typedef enum {
   SELECTION_CHARACTER,
   SELECTION_BUTTON,
@@ -102,6 +107,7 @@ DECLARE_COMPONENT_ID(Button);
 DECLARE_COMPONENT_ID(Panel);
 DECLARE_COMPONENT_ID(CharacterData);
 DECLARE_COMPONENT_ID(TextComponent);
+DECLARE_COMPONENT_ID(Cursor);
 
 static void register_components() {
   REGISTER(Position);
@@ -115,6 +121,7 @@ static void register_components() {
   REGISTER(Panel);
   REGISTER(CharacterData);
   REGISTER(TextComponent);
+  REGISTER(Cursor);
 }
 
 #define SELECTABLE_MAX 32

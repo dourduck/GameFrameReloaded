@@ -3,6 +3,7 @@
 
 #include <math.h>
 #include <stdbool.h>
+#include <stdio.h>
 // #include <stdio.h>
 
 #include "./../../../external/raysan5/include/raylib.h"
@@ -10,6 +11,7 @@
 
 #include "./../../engine/event_system/event_factories.h"
 #include "./components.h"
+#include "spatial_hash_system.h"
 
 static void sys_character_stats(World *w, Archetype *a, void *userdata) {
   CharacterDataCtx *character_data_ctx = userdata;
@@ -180,7 +182,7 @@ static void sys_vel_toward_target_position(World *w, Archetype *a,
 
   for (uint32_t i = 0; i < a->count; i++) {
 
-    if (targets[i].reached){
+    if (targets[i].reached) {
       continue;
     }
 
@@ -221,31 +223,48 @@ static void sys_vel_toward_target_position(World *w, Archetype *a,
 
 /* [NAIVE IMPLEMENTATION] */
 static void sys_collision(World *w, Archetype *a, void *userdata) {
-  (void)w;
-  (void)userdata;
+  SpatialGrid *grid = userdata;
 
   Position *positions = archetype_column(a, Position_id);
   Collider *colliders = archetype_column(a, Collider_id);
   Velocity *velocities = archetype_column(a, Velocity_id);
+  Entity out_entities[MAX_ENTITIES];
 
   for (uint32_t i = 0; i < a->count; i++) {
-    float ix = positions[i].x;
-    float iy = positions[i].y;
+    i32 found = spatial_hash_query(w, grid, positions[i], 8, out_entities,
+                                   MAX_ENTITIES);
+    if (found > 0) {
+      printf("found: %d\n", found);
+    }
 
-    for (uint32_t j = 0; j < a->count; j++) {
-      if (j == i) {
+    for (i32 j = 0; j < found; j++) {
+      Collider *j_collider =
+          world_get_component(w, out_entities[j], Collider_id);
+
+      if (!j_collider) {
         continue;
       }
 
-      float jx = positions[j].x;
-      float jy = positions[j].y;
+      if (out_entities[j].index == a->entities->index &&
+          out_entities[j].generation == a->entities->generation) {
+        continue;
+      }
+
+      Position *i_pos = &positions[i];
+      Position *j_pos = world_get_component(w, out_entities[j], Position_id);
+
+      float ix = i_pos->x;
+      float iy = i_pos->y;
+
+      float jx = j_pos->x;
+      float jy = j_pos->y;
 
       float dir_x = jx - ix;
       float dir_y = jy - iy;
 
       float mag = sqrt((dir_x * dir_x) + (dir_y * dir_y));
 
-      float collider_radius = (colliders[i].radius * 1.25f);
+      float collider_radius = (j_collider->radius);
 
       if (mag < collider_radius) {
         if (mag > 0.0001f) {
@@ -294,6 +313,18 @@ static void sys_render(World *w, Archetype *a, void *userdata) {
   for (uint32_t i = 0; i < a->count; i++) {
     DrawCircle(positions[i].x, positions[i].y, debug_bodies[i].radius,
                debug_bodies[i].color);
+  }
+}
+
+static void sys_render_cursor(World *w, Archetype *a, void *userdata) {
+  (void)w;
+  (void)userdata;
+
+  Position *positions = archetype_column(a, Position_id);
+  Cursor *cursor = archetype_column(a, Cursor_id);
+
+  for (uint32_t i = 0; i < a->count; i++) {
+    DrawCircleLinesV(GetMousePosition(), cursor[i].radius, cursor[i].color);
   }
 }
 

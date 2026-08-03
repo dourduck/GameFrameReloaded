@@ -214,6 +214,18 @@ static StatMenuCtx prefab_ui_stat_menu(World *world) {
   return menu;
 }
 
+static Entity prefab_cursor(World *world, float x, float y) {
+  Entity target = entity_create(world);
+
+  Position position = (Position){.x = x, .y = y};
+  Cursor cursor = (Cursor){.radius = 8, .color = WHITE};
+
+  world_add_component(world, target, Position_id, &position);
+  world_add_component(world, target, Cursor_id, &cursor);
+
+  return target;
+}
+
 #undef DEBUG
 
 #endif
