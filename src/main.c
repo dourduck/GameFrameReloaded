@@ -21,7 +21,7 @@ int main(void) {
   World world = {0};
   world_init(&world);
 
-#define SLIME_COUNT 128
+#define SLIME_COUNT 1024
   Entity slimes[SLIME_COUNT] = {0};
 
   for (int i = 0; i < SLIME_COUNT; i++) {
@@ -43,14 +43,17 @@ int main(void) {
 
   /* vvv [ [DEBUG] ] vvv */
 
-  // Font font = LoadFont("./assets/font/OpenDyslexic-Regular.otf");
-  // Color debug_text_color = (Color){.r = 200, .g = 200, .b = 32, .a = 255};
+  Font font = LoadFont("./assets/font/OpenDyslexic-Regular.otf");
+  Color debug_text_color = (Color){.r = 200, .g = 200, .b = 32, .a = 255};
 
   /* ^^^ [ [DEBUG] ] ^^^ */
   Vector2 mos_pos = GetMousePosition();
   Entity cursor = prefab_cursor(&world, mos_pos.x, mos_pos.y);
   
   SpatialGrid spatial_grid;
+  SpatialHashCtx spatial_ctx;
+  spatial_ctx.grid = &spatial_grid;
+  spatial_ctx.out_entities;
 
   while (!WindowShouldClose()) {
     float dt = GetFrameTime();
@@ -62,11 +65,12 @@ int main(void) {
         (BIT(Position_id) | BIT(Velocity_id) | BIT(Target_id) | BIT(Speed_id)),
         sys_vel_toward_target_position, &event_queue);
 
+    spatial_hash_clear(&spatial_grid);
     world_query(&world, (BIT(Position_id)) , spatial_hash_rebuild, &spatial_grid);
 
     /* collision check */
     world_query(&world, (BIT(Position_id) | BIT(Collider_id)), sys_collision,
-                &spatial_grid);
+                &spatial_ctx);
 
     /* movement */
     world_query(&world, (BIT(Position_id) | BIT(Velocity_id)), sys_movement,
@@ -106,9 +110,9 @@ int main(void) {
     world_query(&world, (BIT(Position_id) | BIT(Cursor_id)), sys_render_cursor,
                 NULL);
 
-    // char buf[16] = "\0";
-    // snprintf(buf, sizeof(buf), "FPS: %d", GetFPS());
-    // DrawTextEx(font, buf, (Vector2){10, 10}, 36, 0, debug_text_color);
+    char buf[16] = "\0";
+    snprintf(buf, sizeof(buf), "FPS: %d", GetFPS());
+    DrawTextEx(font, buf, (Vector2){10, 10}, 36, 0, debug_text_color);
 
     EndDrawing();
   }

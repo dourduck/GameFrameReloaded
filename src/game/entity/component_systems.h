@@ -223,35 +223,31 @@ static void sys_vel_toward_target_position(World *w, Archetype *a,
 
 /* [NAIVE IMPLEMENTATION] */
 static void sys_collision(World *w, Archetype *a, void *userdata) {
-  SpatialGrid *grid = userdata;
+  SpatialHashCtx *ctx = userdata;
 
   Position *positions = archetype_column(a, Position_id);
   Collider *colliders = archetype_column(a, Collider_id);
   Velocity *velocities = archetype_column(a, Velocity_id);
-  Entity out_entities[MAX_ENTITIES];
 
   for (uint32_t i = 0; i < a->count; i++) {
-    i32 found = spatial_hash_query(w, grid, positions[i], 8, out_entities,
-                                   MAX_ENTITIES);
-    if (found > 0) {
-      printf("found: %d\n", found);
-    }
+    ctx->entities_found = spatial_hash_query(w, ctx->grid, positions[i], colliders[i].radius,
+                                   ctx->out_entities, MAX_ENTITIES);
 
-    for (i32 j = 0; j < found; j++) {
+    for (i32 j = 0; j < ctx->entities_found; j++) {
       Collider *j_collider =
-          world_get_component(w, out_entities[j], Collider_id);
+          world_get_component(w, ctx->out_entities[j], Collider_id);
 
       if (!j_collider) {
         continue;
       }
 
-      if (out_entities[j].index == a->entities->index &&
-          out_entities[j].generation == a->entities->generation) {
+      if (ctx->out_entities[j].index == a->entities[i].index &&
+          ctx->out_entities[j].generation == a->entities[i].generation) {
         continue;
       }
 
       Position *i_pos = &positions[i];
-      Position *j_pos = world_get_component(w, out_entities[j], Position_id);
+      Position *j_pos = world_get_component(w, ctx->out_entities[j], Position_id);
 
       float ix = i_pos->x;
       float iy = i_pos->y;
@@ -266,14 +262,14 @@ static void sys_collision(World *w, Archetype *a, void *userdata) {
 
       float collider_radius = (j_collider->radius);
 
-      if (mag < collider_radius) {
+      if (mag < (collider_radius * 1.25f)) {
         if (mag > 0.0001f) {
           /* normalize and invert then scale to correct position*/
-          positions[i].x += -(dir_x / mag) * collider_radius * 0.1f;
-          positions[i].y += -(dir_y / mag) * collider_radius * 0.1f;
+          positions[i].x += -(dir_x / mag) * collider_radius * 0.5f;
+          positions[i].y += -(dir_y / mag) * collider_radius * 0.5f;
 
-          positions[j].x += (dir_x / mag) * collider_radius * 0.1f;
-          positions[j].y += (dir_y / mag) * collider_radius * 0.1f;
+          positions[j].x += (dir_x / mag) * collider_radius * 0.5f;
+          positions[j].y += (dir_y / mag) * collider_radius * 0.5f;
 
           velocities[i].dx += -(dir_x / mag) * 10;
           velocities[i].dy += -(dir_y / mag) * 10;

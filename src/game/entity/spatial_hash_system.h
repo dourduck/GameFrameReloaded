@@ -9,7 +9,7 @@
 #include <stddef.h>
 #include <string.h>
 
-#define CELL_SIZE 128.0 /* What is the average size of an entity? */
+#define CELL_SIZE 16.0 /* What is the average size of an entity? */
 #define TABLE_SIZE 4096
 
 typedef struct HashNode {
@@ -25,7 +25,9 @@ typedef struct {
 
 typedef struct {
   SpatialGrid *grid;
-  World *world;
+  Entity out_entities[MAX_ENTITIES];
+  i32 entities_found;
+  // World *world;
 } SpatialHashCtx;
 
 static void world_to_cell(float pos_x, float pos_y, i32 *cx, i32 *cy) {
@@ -62,7 +64,6 @@ static void spatial_hash_insert(SpatialGrid *grid, Position *entity_position,
 static void spatial_hash_rebuild(World *w, Archetype *a, void *userdata) {
   SpatialGrid *grid = (SpatialGrid *)userdata;
   Position *positions = archetype_column(a, Position_id);
-  spatial_hash_clear(grid);
   for (u32 i = 0; i < a->count; i++) {
     spatial_hash_insert(grid, &positions[i], a->entities[i]);
   }
