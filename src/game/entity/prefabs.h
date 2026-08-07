@@ -23,6 +23,85 @@ static Entity prefab_target(World *world, float x, float y) {
   return target;
 }
 
+static Entity prefab_chicken(World *world, float x, float y, Texture texture,
+                             Rectangle src, Vector2 scale) {
+
+  float w = texture.width;
+  float h = texture.height;
+
+  float w_scaled = w * scale.x;
+  float h_scaled = h * scale.y;
+
+  float padding = 4;
+  float x_offset = -(16 * scale.x * 0.25f) - (padding * scale.x * 0.5f);
+  float y_offset = -(17.5 * scale.y * 0.25f) - (padding * scale.y * 0.5f);
+
+  /*
+   * res: 32x32
+   * pos: 10, 11
+   * size: 12x13
+   * center: 16, 17.5
+   * */
+
+  Entity chicken_entity = entity_create(world);
+
+  Position position = (Position){.x = x, .y = y};
+  world_add_component(world, chicken_entity, Position_id, &position);
+
+  Vector2 sprite_origin = {.x = (16 * scale.x),
+                           .y = (17.5 * scale.y) + (padding * scale.y * 0.25f)};
+  Sprite sprite = (Sprite){
+      .texture = texture, .src = src, .scale = scale, .origin = sprite_origin};
+  world_add_component(world, chicken_entity, Sprite_id, &sprite);
+
+  Selectable selectable = (Selectable){
+      .entity = chicken_entity,
+      .width = (16 * scale.x * 0.5f) + (padding * scale.x),
+      .height = (17.5 * scale.y * 0.5f) + (padding * scale.y),
+      .offset_x = x_offset,
+      .offset_y = y_offset,
+      .priority = 1,
+      .selected = false,
+      .type = SELECTION_CHARACTER,
+  };
+
+  world_add_component(world, chicken_entity, Selectable_id, &selectable);
+
+  Collider collider = (Collider){.radius = (16 * scale.x * 0.5f)};
+  world_add_component(world, chicken_entity, Collider_id, &collider);
+
+  Velocity velocity = (Velocity){.dx = 0.0f, .dy = 0.0f};
+  world_add_component(world, chicken_entity, Velocity_id, &velocity);
+
+  float target_x = GetRandomValue(10, GetScreenWidth() - 10);
+  float target_y = GetRandomValue(10, GetScreenHeight() - 10);
+  Entity target_entity = prefab_target(world, target_x, target_y);
+
+  Position *target_position =
+      world_get_component(world, target_entity, Position_id);
+
+  assert(target_position);
+
+  Target target = (Target){
+      .entity = target_entity,
+      .reached_threshold = 10.0f,
+  };
+
+  world_add_component(world, chicken_entity, Target_id, &target);
+
+  Speed speed = (Speed){.speed = 50.0f};
+  world_add_component(world, chicken_entity, Speed_id, &speed);
+
+  if (DEBUG) {
+    BodyDebug body_debug =
+        (BodyDebug){.color = ORANGE, .radius = collider.radius};
+
+    world_add_component(world, chicken_entity, BodyDebug_id, &body_debug);
+  }
+
+  return chicken_entity;
+}
+
 static Entity prefab_ui_button(World *world, Vector2 origin, int width,
                                int height) {
   Entity btn_entity = entity_create(world);

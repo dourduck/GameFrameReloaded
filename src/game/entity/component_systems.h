@@ -230,8 +230,9 @@ static void sys_collision(World *w, Archetype *a, void *userdata) {
   Velocity *velocities = archetype_column(a, Velocity_id);
 
   for (uint32_t i = 0; i < a->count; i++) {
-    ctx->entities_found = spatial_hash_query(w, ctx->grid, positions[i], colliders[i].radius,
-                                   ctx->out_entities, MAX_ENTITIES);
+    ctx->entities_found =
+        spatial_hash_query(w, ctx->grid, positions[i], colliders[i].radius,
+                           ctx->out_entities, MAX_ENTITIES);
 
     for (i32 j = 0; j < ctx->entities_found; j++) {
       Collider *j_collider =
@@ -247,7 +248,8 @@ static void sys_collision(World *w, Archetype *a, void *userdata) {
       }
 
       Position *i_pos = &positions[i];
-      Position *j_pos = world_get_component(w, ctx->out_entities[j], Position_id);
+      Position *j_pos =
+          world_get_component(w, ctx->out_entities[j], Position_id);
 
       float ix = i_pos->x;
       float iy = i_pos->y;
@@ -262,14 +264,14 @@ static void sys_collision(World *w, Archetype *a, void *userdata) {
 
       float collider_radius = (j_collider->radius);
 
-      if (mag < (collider_radius * 1.25f)) {
+      if (mag < (collider_radius * 2)) {
         if (mag > 0.0001f) {
           /* normalize and invert then scale to correct position*/
-          positions[i].x += -(dir_x / mag) * collider_radius * 0.5f;
-          positions[i].y += -(dir_y / mag) * collider_radius * 0.5f;
+          positions[i].x += -(dir_x / mag) * collider_radius * 0.1f;
+          positions[i].y += -(dir_y / mag) * collider_radius * 0.1f;
 
-          positions[j].x += (dir_x / mag) * collider_radius * 0.5f;
-          positions[j].y += (dir_y / mag) * collider_radius * 0.5f;
+          positions[j].x += (dir_x / mag) * collider_radius * 0.1f;
+          positions[j].y += (dir_y / mag) * collider_radius * 0.1f;
 
           velocities[i].dx += -(dir_x / mag) * 10;
           velocities[i].dy += -(dir_y / mag) * 10;
@@ -305,10 +307,38 @@ static void sys_render(World *w, Archetype *a, void *userdata) {
 
   Position *positions = archetype_column(a, Position_id);
   BodyDebug *debug_bodies = archetype_column(a, BodyDebug_id);
+  Sprite *sprites = archetype_column(a, Sprite_id);
 
   for (uint32_t i = 0; i < a->count; i++) {
     DrawCircle(positions[i].x, positions[i].y, debug_bodies[i].radius,
                debug_bodies[i].color);
+  }
+}
+
+static void sys_render_sprites(World *w, Archetype *a, void *userdata) {
+  (void)w;
+  (void)userdata;
+
+  Position *positions = archetype_column(a, Position_id);
+  Sprite *sprites = archetype_column(a, Sprite_id);
+
+  for (uint32_t i = 0; i < a->count; i++) {
+    Sprite sprite = sprites[i];
+    Position pos = positions[i];
+
+    float dest_x = pos.x;
+    float dest_y = pos.y;
+    float dest_w = sprite.src.width * sprite.scale.x;
+    float dest_h = sprite.src.height * sprite.scale.y;
+
+    Rectangle dest = {
+        .x = dest_x,
+        .y = dest_y,
+        .width = dest_w,
+        .height = dest_h,
+    };
+
+    DrawTexturePro(sprite.texture, sprite.src, dest, sprite.origin, 0, WHITE);
   }
 }
 

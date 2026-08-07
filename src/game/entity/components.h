@@ -94,6 +94,13 @@ typedef struct {
   Color color;
 } TextComponent;
 
+typedef struct {
+  Texture texture;
+  Rectangle src;
+  Vector2 scale;
+  Vector2 origin;
+} Sprite;
+
 DECLARE_COMPONENT_ID(Position);
 DECLARE_COMPONENT_ID(Velocity);
 DECLARE_COMPONENT_ID(Health);
@@ -108,6 +115,7 @@ DECLARE_COMPONENT_ID(Panel);
 DECLARE_COMPONENT_ID(CharacterData);
 DECLARE_COMPONENT_ID(TextComponent);
 DECLARE_COMPONENT_ID(Cursor);
+DECLARE_COMPONENT_ID(Sprite);
 
 static void register_components() {
   REGISTER(Position);
@@ -122,6 +130,7 @@ static void register_components() {
   REGISTER(CharacterData);
   REGISTER(TextComponent);
   REGISTER(Cursor);
+  REGISTER(Sprite);
 }
 
 #define SELECTABLE_MAX 32

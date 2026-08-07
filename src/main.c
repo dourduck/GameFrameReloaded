@@ -3,6 +3,7 @@
 #include "./game/event_handlers.h"
 #include "./platform/window.h"
 #include "./resources.h"
+#include "game/entity/components.h"
 #include "game/entity/spatial_hash_system.h"
 #include "raylib.h"
 #include <stdio.h>
@@ -22,12 +23,12 @@ int main(void) {
   World world = {0};
   world_init(&world);
 
-#define SLIME_COUNT 2000
-  Entity slimes[SLIME_COUNT] = {0};
-
-  for (int i = 0; i < SLIME_COUNT; i++) {
-    slimes[i] = prefab_slime(&world);
-  }
+  // #define SLIME_COUNT 2000
+  //   Entity slimes[SLIME_COUNT] = {0};
+  //
+  //   for (int i = 0; i < SLIME_COUNT; i++) {
+  //     slimes[i] = prefab_slime(&world);
+  //   }
 
   StatMenuCtx stat_menu_ctx = prefab_ui_stat_menu(&world);
   SelectableCtx selectable_ctx = selectable_ctx_init(&event_queue);
@@ -52,19 +53,43 @@ int main(void) {
 
   ResourceHashTable *resource_hashtable = resource_hashtable_create();
 
-  // DECLARE_KEY_TEXTURE(chicken);
-  // ResourceData *rtexture_chicken = resource_data_create(
-  //     resource_hashtable,
-  //     (ResourceParams){.rkind = RESOURCE_KIND_TEXTURE,
-  //                      .rkey = rkey_texture_chicken,
-  //                      .rpath = "./assets/Chicken_placeholder.png"});
-  //
-  // DECLARE_KEY_TEXTURE(egg);
-  // ResourceData *resource_texture_egg = resource_data_create(
-  //     resource_hashtable,
-  //     (ResourceParams){.rkind = RESOURCE_KIND_TEXTURE,
-  //                      .rkey = rkey_texture_egg,
-  //                      .rpath = "./assets/Chicken_egg.png"});
+  DECLARE_KEY_TEXTURE(chicken);
+  ResourceData *rtexture_chicken = resource_data_create(
+      resource_hashtable,
+      (ResourceParams){.rkind = RESOURCE_KIND_TEXTURE,
+                       .rkey = rkey_texture_chicken,
+                       .rpath = "./assets/Chicken_placeholder.png"});
+
+  DECLARE_KEY_TEXTURE(egg);
+  ResourceData *resource_texture_egg = resource_data_create(
+      resource_hashtable,
+      (ResourceParams){.rkind = RESOURCE_KIND_TEXTURE,
+                       .rkey = rkey_texture_egg,
+                       .rpath = "./assets/Chicken_egg.png"});
+
+#define CHICKEN_COUNT 1024
+  Entity chickens[CHICKEN_COUNT] = {0};
+
+  Texture chicken_texture =
+      resource_hashtable_get_item(resource_hashtable, rkey_texture_chicken)
+          ->data.texture;
+  Rectangle chicken_tex_src = {.x = 0,
+                               .y = 0,
+                               .width = chicken_texture.width,
+                               .height = chicken_texture.height};
+  Vector2 chicken_tex_scale = {.x = 2, .y = 2};
+
+  int margin_x = 100 - (chicken_texture.width * chicken_tex_scale.x * 0.5);
+  int margin_y = 100 - (chicken_texture.height * chicken_tex_scale.y * 0.5);
+  int screen_w = GetScreenWidth();
+  int screen_h = GetScreenHeight();
+
+  for (int i = 0; i < CHICKEN_COUNT; i++) {
+    int rand_x = GetRandomValue(margin_x, (screen_w - margin_x));
+    int rand_y = GetRandomValue(0, (screen_h - margin_y));
+    chickens[i] = prefab_chicken(&world, rand_x, rand_y, chicken_texture,
+                                 chicken_tex_src, chicken_tex_scale);
+  }
 
   /* vvv [ [DEBUG] ] vvv */
 
@@ -121,6 +146,8 @@ int main(void) {
     BeginDrawing();
     ClearBackground(DARKPURPLE);
 
+    world_query(&world, (BIT(Position_id) | BIT(Sprite_id)), sys_render_sprites,
+                NULL);
     world_query(&world, (BIT(Position_id) | BIT(BodyDebug_id)), sys_render,
                 NULL);
 
