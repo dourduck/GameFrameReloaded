@@ -2,6 +2,7 @@
 #include "./game/entity/component_systems.h"
 #include "./game/event_handlers.h"
 #include "./platform/window.h"
+#include "./resources.h"
 #include "game/entity/spatial_hash_system.h"
 #include "raylib.h"
 #include <stdio.h>
@@ -21,7 +22,7 @@ int main(void) {
   World world = {0};
   world_init(&world);
 
-#define SLIME_COUNT 1024
+#define SLIME_COUNT 2000
   Entity slimes[SLIME_COUNT] = {0};
 
   for (int i = 0; i < SLIME_COUNT; i++) {
@@ -41,19 +42,47 @@ int main(void) {
 
   game_handler_register(&event_bus, &game_handler_ctx);
 
-  /* vvv [ [DEBUG] ] vvv */
-
-  Font font = LoadFont("./assets/font/OpenDyslexic-Regular.otf");
-  Color debug_text_color = (Color){.r = 200, .g = 200, .b = 32, .a = 255};
-
-  /* ^^^ [ [DEBUG] ] ^^^ */
   Vector2 mos_pos = GetMousePosition();
   Entity cursor = prefab_cursor(&world, mos_pos.x, mos_pos.y);
-  
+
   SpatialGrid spatial_grid;
   SpatialHashCtx spatial_ctx;
   spatial_ctx.grid = &spatial_grid;
   spatial_ctx.out_entities;
+
+  ResourceHashTable *resource_hashtable = resource_hashtable_create();
+
+  // DECLARE_KEY_TEXTURE(chicken);
+  // ResourceData *rtexture_chicken = resource_data_create(
+  //     resource_hashtable,
+  //     (ResourceParams){.rkind = RESOURCE_KIND_TEXTURE,
+  //                      .rkey = rkey_texture_chicken,
+  //                      .rpath = "./assets/Chicken_placeholder.png"});
+  //
+  // DECLARE_KEY_TEXTURE(egg);
+  // ResourceData *resource_texture_egg = resource_data_create(
+  //     resource_hashtable,
+  //     (ResourceParams){.rkind = RESOURCE_KIND_TEXTURE,
+  //                      .rkey = rkey_texture_egg,
+  //                      .rpath = "./assets/Chicken_egg.png"});
+
+  /* vvv [ [DEBUG] ] vvv */
+
+  DECLARE_KEY_FONT(open_dyslexic);
+  ResourceData *rfont_open_dyslexic = resource_data_create(
+      resource_hashtable, (ResourceParams){
+                              .rkind = RESOURCE_KIND_FONT,
+                              .rkey = rkey_font_open_dyslexic,
+                              .rpath = "./assets/font/OpenDyslexic-Regular.otf",
+                          });
+
+  Font font =
+      resource_hashtable_get_item(resource_hashtable, rkey_font_open_dyslexic)
+          ->data.font;
+
+  Color debug_text_color = (Color){.r = 200, .g = 200, .b = 32, .a = 255};
+
+  /* ^^^ [ [DEBUG] ] ^^^ */
 
   while (!WindowShouldClose()) {
     float dt = GetFrameTime();
@@ -66,7 +95,8 @@ int main(void) {
         sys_vel_toward_target_position, &event_queue);
 
     spatial_hash_clear(&spatial_grid);
-    world_query(&world, (BIT(Position_id)) , spatial_hash_rebuild, &spatial_grid);
+    world_query(&world, (BIT(Position_id)), spatial_hash_rebuild,
+                &spatial_grid);
 
     /* collision check */
     world_query(&world, (BIT(Position_id) | BIT(Collider_id)), sys_collision,
@@ -110,14 +140,15 @@ int main(void) {
     world_query(&world, (BIT(Position_id) | BIT(Cursor_id)), sys_render_cursor,
                 NULL);
 
-    char buf[16] = "\0";
-    snprintf(buf, sizeof(buf), "FPS: %d", GetFPS());
-    DrawTextEx(font, buf, (Vector2){10, 10}, 36, 0, debug_text_color);
+    DrawTextEx(font, TextFormat("FPS: %d", GetFPS()), (Vector2){10, 10}, 36, 0,
+               debug_text_color);
 
     EndDrawing();
   }
 
   game_handler_unregister(&event_bus);
+
+  resource_hashtable_free(resource_hashtable);
 }
 
 /* vim:set ts=3 sw=2 sts=2 et: */

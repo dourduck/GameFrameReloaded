@@ -6,7 +6,7 @@
 #include "raylib.h"
 #include <math.h>
 
-#define DEBUG 1
+#define DEBUG 0
 
 static Entity prefab_target(World *world, float x, float y) {
   Entity target = entity_create(world);
