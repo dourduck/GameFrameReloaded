@@ -6,14 +6,14 @@
 #include <string.h>
 
 #define DECLARE_KEY_SOUND(x)                                                   \
-  const char *rkey_##audio_##x = "rkey_"                                       \
-                                 "sound_" #x
+  static const char *rkey_##audio_##x = "rkey_"                                \
+                                        "sound_" #x
 #define DECLARE_KEY_TEXTURE(x)                                                 \
-  const char *rkey_##texture_##x = "rkey_"                                     \
-                                   "texture_" #x
+  static const char *rkey_##texture_##x = "rkey_"                              \
+                                          "texture_" #x
 #define DECLARE_KEY_FONT(x)                                                    \
-  const char *rkey_##font_##x = "rkey_"                                        \
-                                "font_" #x
+  static const char *rkey_##font_##x = "rkey_"                                 \
+                                       "font_" #x
 
 #define HT_TABLE_SIZE 101 // prime number reduces clustering (?)
 #define HT_MAX_KEY_SIZE 32
@@ -196,5 +196,25 @@ static ResourceData *resource_data_create(ResourceHashTable *ht,
   return resource;
 }
 
+static void resource_data_unload(ResourceData *rdata) {
+  switch (rdata->kind) {
+
+  case RESOURCE_KIND_TEXTURE:
+    UnloadTexture(rdata->data.texture);
+    break;
+  case RESOURCE_KIND_SOUND:
+    UnloadSound(rdata->data.sound);
+    break;
+  case RESOURCE_KIND_FONT:
+    UnloadFont(rdata->data.font);
+    break;
+  }
+}
+
+static void resource_data_unload_with_key(ResourceHashTable *ht, const char* rkey){
+  ResourceData *rdata = resource_hashtable_get_item(ht, rkey);
+  resource_data_unload(rdata);
+}
+
 #endif
-/* vim:: */
+/* vim:set ts=3 sw=2 sts=2 et: */

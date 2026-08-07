@@ -3,10 +3,12 @@
 #include "./game/event_handlers.h"
 #include "./platform/window.h"
 #include "./resources.h"
+#include "./rkeys.h"
 #include "game/entity/components.h"
 #include "game/entity/spatial_hash_system.h"
 #include "raylib.h"
 #include <stdio.h>
+
 
 int main(void) {
   Environment env = Environment_CreateDefault();
@@ -53,14 +55,12 @@ int main(void) {
 
   ResourceHashTable *resource_hashtable = resource_hashtable_create();
 
-  DECLARE_KEY_TEXTURE(chicken);
   ResourceData *rtexture_chicken = resource_data_create(
       resource_hashtable,
       (ResourceParams){.rkind = RESOURCE_KIND_TEXTURE,
                        .rkey = rkey_texture_chicken,
                        .rpath = "./assets/Chicken_placeholder.png"});
 
-  DECLARE_KEY_TEXTURE(egg);
   ResourceData *resource_texture_egg = resource_data_create(
       resource_hashtable,
       (ResourceParams){.rkind = RESOURCE_KIND_TEXTURE,
@@ -93,7 +93,6 @@ int main(void) {
 
   /* vvv [ [DEBUG] ] vvv */
 
-  DECLARE_KEY_FONT(open_dyslexic);
   ResourceData *rfont_open_dyslexic = resource_data_create(
       resource_hashtable, (ResourceParams){
                               .rkind = RESOURCE_KIND_FONT,
@@ -175,6 +174,7 @@ int main(void) {
 
   game_handler_unregister(&event_bus);
 
+  resource_data_unload_all(resource_hashtable);
   resource_hashtable_free(resource_hashtable);
 }
 
