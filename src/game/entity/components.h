@@ -3,6 +3,7 @@
 #include "./../../../external/raysan5/include/raylib.h"
 #include "./../../engine/ecs/archetypes.h"
 #include "./../../engine/event_system/event_queue.h"
+#include <string.h>
 
 typedef struct {
   float x;
@@ -141,14 +142,9 @@ typedef struct {
   int count;
 } SelectableCtx;
 
-static SelectableCtx selectable_ctx_init(EventQueue *q) {
-  SelectableCtx ctx = (SelectableCtx){
-      .event_queue = q,
-      .count = 0,
-      .selections = {0},
-  };
-
-  return ctx;
+static void selectable_ctx_init(EventQueue *q, SelectableCtx *selectable_ctx_out) {
+  selectable_ctx_out->event_queue = q;
+  selectable_ctx_out->count = 0;
 }
 #endif
 /* vim:set ts=3 sw=2 sts=2 et: */

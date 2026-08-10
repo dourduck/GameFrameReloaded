@@ -220,8 +220,8 @@ typedef struct {
   char buffer[64];
 } StatMenuCtx;
 
-static StatMenuCtx prefab_ui_stat_menu(World *world) {
-  StatMenuCtx menu = {0};
+static void prefab_ui_stat_menu(World *world, StatMenuCtx *stat_menu_out) {
+  // StatMenuCtx menu = {0};
   Entity root = entity_create(world);
 
   float width = 300;
@@ -286,11 +286,9 @@ static StatMenuCtx prefab_ui_stat_menu(World *world) {
       (Vector2){.x = pos_x, .y = GetScreenHeight() - ((elem_h - 16) * 3)},
       width - 16, elem_h, "");
 
-  menu.root = root;
-  menu.world = world;
-  menu.txt_hunger = world_get_component(world, txt_hunger, TextComponent_id);
-
-  return menu;
+  stat_menu_out->root = root;
+  stat_menu_out->world = world;
+  stat_menu_out->txt_hunger = world_get_component(world, txt_hunger, TextComponent_id);
 }
 
 static Entity prefab_cursor(World *world, float x, float y) {
