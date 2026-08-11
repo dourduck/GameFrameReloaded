@@ -6,6 +6,7 @@
 #include "./entity/prefabs.h" /* StatMenuCtx */
 #include <stdio.h>
 #include "./entity/components.h"
+#include "raylib.h"
 
 typedef struct {
   World *world;
@@ -31,11 +32,16 @@ static void on_target_reached(const Event *e, void *ctx) {
   Position *target_pos = world_get_component(
       w, e->data.entity_target_reached.target_entity, Position_id);
 
-  float rand_x = target_pos->x + (GetRandomValue(0, 1) ? -100 : 100);
-  float rand_y = target_pos->y + (GetRandomValue(0, 1) ? -100 : 100);
+  int x_offset = 200;
+  int y_offset = 200;
+  float rand_x = target_pos->x + (GetRandomValue(0, 1) ? -x_offset : x_offset);
+  float rand_y = target_pos->y + (GetRandomValue(0, 1) ? -y_offset : y_offset);
 
-  rand_x = rand_x > 800 ? (rand_x - 200) : rand_x < 0 ? (rand_x + 200) :
-  rand_x; rand_y = rand_y > 600 ? (rand_y - 200) : rand_y < 0 ? (rand_y + 200)
+  int screen_width = GetScreenWidth();
+  int screen_height = GetScreenHeight();
+
+  rand_x = rand_x > screen_width ? (rand_x - (x_offset * 1.25f)) : rand_x < 0 ? (rand_x + (x_offset * 1.25f)) : rand_x;
+  rand_y = rand_y > screen_height ? (rand_y - (y_offset * 1.25f)) : rand_y < 0 ? (rand_y + y_offset * 1.25f)
   : rand_y;
 
   target_pos->x = rand_x;
