@@ -12,7 +12,8 @@
 
 #define MAX_COMPONENTS 32
 #define MAX_ARCHETYPES 256
-#define MAX_ENTITIES 4096
+// #define MAX_ENTITIES 4096
+#define MAX_ENTITIES 4096 * 16
 #define ARCHETYPE_HASH_BUCKETS                                                 \
   512 /* power of two, comfortably > MAX_ARCHETYPES */
 

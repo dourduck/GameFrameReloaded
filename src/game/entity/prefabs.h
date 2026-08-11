@@ -60,7 +60,7 @@ static Entity prefab_chicken(World *world, float x, float y, Texture texture,
       .height = (17.5 * scale.y * 0.5f) + (padding * scale.y),
       .offset_x = x_offset,
       .offset_y = y_offset,
-      .priority = 1,
+      .priority = 10,
       .selected = false,
       .type = SELECTION_CHARACTER,
   };

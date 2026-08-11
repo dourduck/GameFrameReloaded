@@ -21,7 +21,7 @@ static Environment Environment_CreateDefault() {
       .title = "Game",
       .target_fps = 120,
       .exit_key = KEY_Q,
-      .flags = 0,
+      .flags = FLAG_FULLSCREEN_MODE,
   };
 }
 

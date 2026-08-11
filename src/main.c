@@ -11,7 +11,7 @@
 #include "raylib.h"
 #include <stdio.h>
 
-#define CHICKEN_COUNT 1024
+#define CHICKEN_COUNT (1024 * 8)
 
 typedef struct {
   float physics_tick_rate;

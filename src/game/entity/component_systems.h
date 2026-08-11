@@ -275,28 +275,28 @@ static void sys_collision(World *w, Archetype *a, void *userdata) {
       float collider_radius = (j_collider->radius);
 
       if (mag < (collider_radius * 2)) {
-        if (mag > 0.00001f) {
+        if (mag > 0.0001f) {
           /* normalize and invert then scale to correct position*/
           positions[i].x += -(dir_x / mag) * collider_radius * 0.1f;
           positions[i].y += -(dir_y / mag) * collider_radius * 0.1f;
 
-          positions[j].x += (dir_x / mag) * collider_radius * 0.1f;
-          positions[j].y += (dir_y / mag) * collider_radius * 0.1f;
+          // positions[j].x += (dir_x / mag) * collider_radius * 0.1f;
+          // positions[j].y += (dir_y / mag) * collider_radius * 0.1f;
 
           velocities[i].dx += -(dir_x / mag) * 10;
           velocities[i].dy += -(dir_y / mag) * 10;
 
-          velocities[j].dx += (dir_x / mag) * 10;
-          velocities[j].dy += (dir_y / mag) * 10;
+          // velocities[j].dx += (dir_x / mag) * 10000;
+          // velocities[j].dy += (dir_y / mag) * 10000;
 
           // float dx_i = velocities[i].dx;
           // float dy_i = velocities[i].dy;
 
-          float dx_j = velocities[j].dx;
-          float dy_j = velocities[j].dy;
+          // float dx_j = velocities[j].dx;
+          // float dy_j = velocities[j].dy;
 
-          float d_min = -10;
-          float d_max = 10;
+          float d_min = -100;
+          float d_max = 100;
 
           /* Clamp i velocity */
           velocities[i].dx = (dx_i < d_min)   ? d_min
@@ -307,12 +307,12 @@ static void sys_collision(World *w, Archetype *a, void *userdata) {
                                               : dy_i;
 
           /* Clamp j velocity */
-          velocities[j].dx = (dx_j < d_min)   ? d_min
-                             : (dx_j > d_max) ? d_max
-                                              : dx_j;
-          velocities[j].dy = (dy_j < d_min)   ? d_min
-                             : (dy_j > d_max) ? d_max
-                                              : dy_j;
+          // velocities[j].dx = (dx_j < d_min)   ? d_min
+          //                    : (dx_j > d_max) ? d_max
+          //                                     : dx_j;
+          // velocities[j].dy = (dy_j < d_min)   ? d_min
+          //                    : (dy_j > d_max) ? d_max
+          //                                     : dy_j;
 
         } else {
           int x_rand = GetRandomValue(0, 1) ? 1 : -1;
