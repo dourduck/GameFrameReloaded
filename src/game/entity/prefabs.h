@@ -67,14 +67,14 @@ static Entity prefab_chicken(World *world, float x, float y, Texture texture,
 
   world_add_component(world, chicken_entity, Selectable_id, &selectable);
 
-  Collider collider = (Collider){.radius = (16 * scale.x * 0.5f)};
+  Collider collider = (Collider){.radius = (16 * scale.x * 0.6f)};
   world_add_component(world, chicken_entity, Collider_id, &collider);
 
   Velocity velocity = (Velocity){.dx = 0.0f, .dy = 0.0f};
   world_add_component(world, chicken_entity, Velocity_id, &velocity);
 
-  float target_x = GetRandomValue(10, GetScreenWidth() - 10);
-  float target_y = GetRandomValue(10, GetScreenHeight() - 10);
+  float target_x = GetRandomValue(2, GetScreenWidth() - 2);
+  float target_y = GetRandomValue(2, GetScreenHeight() - 2);
   Entity target_entity = prefab_target(world, target_x, target_y);
 
   Position *target_position =
@@ -89,7 +89,7 @@ static Entity prefab_chicken(World *world, float x, float y, Texture texture,
 
   world_add_component(world, chicken_entity, Target_id, &target);
 
-  Speed speed = (Speed){.speed = 50.0f};
+  Speed speed = (Speed){.speed = 60.0f};
   world_add_component(world, chicken_entity, Speed_id, &speed);
 
   if (DEBUG) {

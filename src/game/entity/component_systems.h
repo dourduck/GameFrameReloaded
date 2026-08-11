@@ -229,6 +229,17 @@ static void sys_collision(World *w, Archetype *a, void *userdata) {
   Velocity *velocities = archetype_column(a, Velocity_id);
 
   for (uint32_t i = 0; i < a->count; i++) {
+
+    float dx_i = velocities[i].dx;
+    float dy_i = velocities[i].dy;
+
+    if (dx_i > 0) {
+      velocities[i].dx -= 0.001f;
+    }
+    if (dy_i > 0) {
+      velocities[i].dy -= 0.001f;
+    }
+
     ctx->entities_found =
         spatial_hash_query(w, ctx->grid, positions[i], colliders[i].radius,
                            ctx->out_entities, MAX_ENTITIES);
@@ -278,8 +289,8 @@ static void sys_collision(World *w, Archetype *a, void *userdata) {
           velocities[j].dx += (dir_x / mag) * 10;
           velocities[j].dy += (dir_y / mag) * 10;
 
-          float dx_i = velocities[i].dx;
-          float dy_i = velocities[i].dy;
+          // float dx_i = velocities[i].dx;
+          // float dy_i = velocities[i].dy;
 
           float dx_j = velocities[j].dx;
           float dy_j = velocities[j].dy;
@@ -288,22 +299,35 @@ static void sys_collision(World *w, Archetype *a, void *userdata) {
           float d_max = 10;
 
           /* Clamp i velocity */
-          velocities[i].dx = (dx_i < d_min) ? d_min : (dx_i > d_max) ? d_max : dx_i;
-          velocities[i].dy = (dy_i < d_min) ? d_min : (dy_i > d_max) ? d_max : dy_i;
+          velocities[i].dx = (dx_i < d_min)   ? d_min
+                             : (dx_i > d_max) ? d_max
+                                              : dx_i;
+          velocities[i].dy = (dy_i < d_min)   ? d_min
+                             : (dy_i > d_max) ? d_max
+                                              : dy_i;
 
           /* Clamp j velocity */
-          velocities[j].dx = (dx_j < d_min) ? d_min : (dx_j > d_max) ? d_max : dx_j;
-          velocities[j].dy = (dy_j < d_min) ? d_min : (dy_j > d_max) ? d_max : dy_j;
+          velocities[j].dx = (dx_j < d_min)   ? d_min
+                             : (dx_j > d_max) ? d_max
+                                              : dx_j;
+          velocities[j].dy = (dy_j < d_min)   ? d_min
+                             : (dy_j > d_max) ? d_max
+                                              : dy_j;
 
         } else {
           int x_rand = GetRandomValue(0, 1) ? 1 : -1;
           int y_rand = GetRandomValue(0, 1) ? 1 : -1;
 
-          positions[i].x += collider_radius * 0.2f * x_rand;
-          positions[i].y += collider_radius * 0.2f * y_rand;
+          positions[i].x += collider_radius * 0.5f * x_rand;
+          positions[i].y += collider_radius * 0.5f * y_rand;
 
-          positions[j].x -= collider_radius * 0.2f * x_rand;
-          positions[j].y -= collider_radius * 0.2f * y_rand;
+          positions[j].x -= collider_radius * 0.5f * x_rand;
+          positions[j].y -= collider_radius * 0.5f * y_rand;
+
+          velocities[i].dx = 0;
+          velocities[i].dy = 0;
+          velocities[j].dx = 0;
+          velocities[j].dy = 0;
         }
       }
     }
