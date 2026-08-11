@@ -36,10 +36,10 @@ typedef struct {
   ResourceHashTable *resource_hashtable;
   DebugCtx debug_ctx;
   PhysicsUpdateCtx physics_update_ctx;
+  Entity chickens[CHICKEN_COUNT];
 } GameCtx;
 
-void spawn_chickens(GameCtx *game_ctx, Entity *chickens) {
-
+void spawn_chickens(GameCtx *game_ctx) {
   Texture chicken_texture =
       resource_hashtable_get_item(game_ctx->resource_hashtable,
                                   rkey_texture_chicken)
@@ -58,13 +58,11 @@ void spawn_chickens(GameCtx *game_ctx, Entity *chickens) {
   for (int i = 0; i < CHICKEN_COUNT; i++) {
     int rand_x = GetRandomValue(margin_x, (screen_w - margin_x));
     int rand_y = GetRandomValue(0, (screen_h - margin_y));
-    chickens[i] =
+    game_ctx->chickens[i] =
         prefab_chicken(&game_ctx->world, rand_x, rand_y, chicken_texture,
                        chicken_tex_src, chicken_tex_scale);
   }
 }
-
-void awake(GameCtx *game_ctx) {}
 
 void start(GameCtx *game_ctx) {
   Environment env = Environment_CreateDefault();
@@ -103,6 +101,9 @@ void start(GameCtx *game_ctx) {
 
   game_ctx->physics_update_ctx.physics_tick_rate = 1.0f / 60.0f;
   game_ctx->physics_update_ctx.physics_timer = 0.0f;
+
+  memset(game_ctx->chickens, 0, sizeof(game_ctx->chickens));
+  spawn_chickens(game_ctx);
 }
 
 void update(GameCtx *game_ctx, float dt) {
@@ -113,7 +114,6 @@ void update(GameCtx *game_ctx, float dt) {
 
   character_data_ctx->dt = dt;
 
-  /* movement */
   world_query(world, (BIT(CharacterData_id)), sys_character_stats,
               character_data_ctx);
 
@@ -128,7 +128,6 @@ void update(GameCtx *game_ctx, float dt) {
 }
 
 void update_physics(GameCtx *game_ctx, float dt) {
-
   PhysicsUpdateCtx *physics_update_ctx = &game_ctx->physics_update_ctx;
   physics_update_ctx->physics_timer += dt;
 
@@ -201,8 +200,8 @@ int main(void) {
 
   start(&game_ctx);
 
-  Entity chickens[CHICKEN_COUNT] = {0};
-  spawn_chickens(&game_ctx, chickens);
+  // Entity chickens[CHICKEN_COUNT] = {0};
+  // spawn_chickens(&game_ctx, chickens);
 
   Vector2 mos_pos = GetMousePosition();
   Entity cursor = prefab_cursor(&game_ctx.world, mos_pos.x, mos_pos.y);

@@ -4,7 +4,6 @@
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
-// #include <stdio.h>
 
 #include "./../../../external/raysan5/include/raylib.h"
 #include "./../../engine/ecs/archetypes.h"
@@ -276,8 +275,25 @@ static void sys_collision(World *w, Archetype *a, void *userdata) {
           velocities[i].dx += -(dir_x / mag) * 10;
           velocities[i].dy += -(dir_y / mag) * 10;
 
+          float dx_i = velocities[i].dx;
+          float dy_i = velocities[i].dy;
+
+          float d_min = -100;
+          float d_max = 100;
+
+          /* Clamp i velocity */
+          velocities[i].dx = dx_i < d_min ? d_min : dx_i > d_max ? d_max : dx_i;
+          velocities[i].dy = dy_i < d_min ? d_min : dy_i > d_max ? d_max : dy_i;
+
           velocities[j].dx += (dir_x / mag) * 10;
           velocities[j].dy += (dir_y / mag) * 10;
+
+          float dx_j = velocities[j].dx;
+          float dy_j = velocities[j].dy;
+
+          /* Clamp j velocity */
+          velocities[j].dx = dx_j < d_min ? d_min : dx_j > d_max ? d_max : dx_j;
+          velocities[j].dy = dy_j < d_min ? d_min : dy_j > d_max ? d_max : dy_j;
 
         } else {
           positions[i].x +=
